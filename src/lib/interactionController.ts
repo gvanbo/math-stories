@@ -1,5 +1,6 @@
 import type { Outcome, Concept, UserProfile, UserInputs, GeneratedStory, StoryContext, CheckForUnderstanding } from '@/types';
 import { findOutcomesForQuery } from '@/layers/curriculum/tools/findOutcomesForQuery';
+import { searchKnowledge } from '@/knowledge/tools/searchKnowledge';
 import { getConceptForOutcome } from '@/layers/concept/tools/getConceptForOutcome';
 import { getPedagogyForConcept } from '@/layers/pedagogy/tools/getPedagogyForConcept';
 import { constructStory } from '@/layers/story/tools/constructStory';
@@ -25,8 +26,10 @@ export type InteractionStep =
   | 'idle'
   | 'querying'
   | 'selecting_outcome'
+  | 'explaining_goal'
   | 'gathering_inputs'
   | 'generating_story'
+  | 'streaming'
   | 'narrating'
   | 'comprehension'
   | 'complete';
@@ -115,9 +118,30 @@ export function selectOutcome(state: InteractionState, outcomeCode: string): Int
 
   return {
     ...state,
-    step: concept ? 'gathering_inputs' : 'selecting_outcome',
+    step: concept ? 'explaining_goal' : 'selecting_outcome',
     selectedOutcome: outcome,
     concept,
+    toolCalls: [...state.toolCalls, toolCall],
+  };
+}
+
+/**
+ * Step 2.5: Explain Math Goal using Knowledge Repository
+ */
+export function explainMathGoal(state: InteractionState): InteractionState {
+  if (!state.selectedOutcome) return state;
+
+  const topics = searchKnowledge(state.selectedOutcome.description);
+  const toolCall: ToolCall = {
+    tool: 'searchKnowledge',
+    input: state.selectedOutcome.description,
+    output: topics.length > 0 ? `Found topic: ${topics[0].topic}` : 'No topic found',
+    timestamp: new Date().toISOString(),
+  };
+
+  return {
+    ...state,
+    step: 'gathering_inputs',
     toolCalls: [...state.toolCalls, toolCall],
   };
 }
@@ -206,6 +230,16 @@ export function startComprehension(state: InteractionState): InteractionState {
 }
 
 /**
+ * Transition to streaming state during Gemini Live API sessions.
+ */
+export function startStreaming(state: InteractionState): InteractionState {
+  return {
+    ...state,
+    step: 'streaming',
+  };
+}
+
+/**
  * Step 6: Record student explanation and complete.
  */
 export function submitExplanation(state: InteractionState, explanation: string): InteractionState {
@@ -228,6 +262,7 @@ export function verifyToolRouting(state: InteractionState): {
   const requiredTools = [
     'findOutcomesForQuery',
     'getConceptForOutcome',
+    'searchKnowledge',
     'constructStory',
     'getPedagogyForConcept',
     'validateOutput',

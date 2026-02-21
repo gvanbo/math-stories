@@ -1,0 +1,108 @@
+[
+  {
+    "id": "grade4-number-1",
+    "strand": "Number",
+    "topic": "Addition and Subtraction",
+    "description": "Add and subtract whole numbers up to 10,000 using standard algorithms and mental math strategies.",
+    "skills": [
+      "Add 4-digit numbers with and without regrouping",
+      "Subtract 4-digit numbers with and without regrouping",
+      "Solve multi-step word problems involving addition and subtraction"
+    ],
+    "models": [
+      {
+        "name": "Base Ten Blocks",
+        "description": "Visualize trading 10 ones for 1 ten, 10 tens for 1 hundred, etc."
+      },
+      {
+        "name": "Number Line",
+        "description": "Visualize jumping forward for addition or backwards for subtraction."
+      }
+    ],
+    "keywords": ["add", "subtract", "sum", "difference", "regroup", "total"]
+  },
+  {
+    "id": "grade4-number-2",
+    "strand": "Number",
+    "topic": "Multiplication Concepts",
+    "description": "Understand multiplication of a 2-digit or 3-digit number by a 1-digit number.",
+    "skills": [
+      "Multiply using equal groups",
+      "Multiply using arrays and area models",
+      "Use doubling and halving strategies"
+    ],
+    "models": [
+      {
+        "name": "Array",
+        "description": "Rows and columns showing equal groups. e.g., 4 rows of 5 is 20."
+      },
+      {
+        "name": "Area Model",
+        "description": "Decompose numbers by place value to multiply parts separately."
+      }
+    ],
+    "keywords": ["multiply", "product", "groups", "array", "times"]
+  },
+  {
+    "id": "grade4-number-3",
+    "strand": "Number",
+    "topic": "Division Concepts",
+    "description": "Understand division 2-digit by 1-digit, and relate to multiplication fact families.",
+    "skills": [
+      "Divide by sharing equally",
+      "Use related multiplication facts to solve division",
+      "Understand remainders conceptually"
+    ],
+    "models": [
+      {
+        "name": "Equal Sharing",
+        "description": "Distribute items one by one into a set number of groups."
+      },
+      {
+        "name": "Fact Triangles",
+        "description": "Show the relationship between the product and two factors."
+      }
+    ],
+    "keywords": ["divide", "quotient", "share", "split", "fact family"]
+  },
+  {
+    "id": "grade4-number-4",
+    "strand": "Number",
+    "topic": "Fractions",
+    "description": "Understand fractions less than or equal to one as parts of a whole or set.",
+    "skills": [
+      "Identify numerator and denominator",
+      "Compare fractions with same denominators",
+      "Relate fractions to decimals (tenths and hundredths)"
+    ],
+    "models": [
+      {
+        "name": "Area Model",
+        "description": "Shade parts of a shape to represent a fraction."
+      },
+      {
+        "name": "Number Line",
+        "description": "Place fractions between 0 and 1 on a line."
+      }
+    ],
+    "keywords": ["fraction", "numerator", "denominator", "part", "whole", "decimal"]
+  },
+  {
+    "id": "grade4-measurement-1",
+    "strand": "Measurement",
+    "topic": "Area and Perimeter",
+    "description": "Calculate area and perimeter of regular and irregular 2D shapes, especially rectangles.",
+    "skills": [
+      "Find perimeter by adding all side lengths",
+      "Find area of rectangles (length × width)",
+      "Understand the difference between distance around (perimeter) and space inside (area)"
+    ],
+    "models": [
+      {
+        "name": "Grid Paper",
+        "description": "Count squares inside a shape for area, count the edges of squares around the shape for perimeter."
+      }
+    ],
+    "keywords": ["area", "perimeter", "rectangle", "shape", "measure", "space"]
+  }
+]
