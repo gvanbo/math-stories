@@ -5,7 +5,7 @@ Central index of all agents in the Math Stories WebApp system. Used by the Orche
 ## Agent Table
 
 | Agent | File | Layer | Model | Tools Exposed |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **Project Manager** | [project-manager.md](file:///l:/math-stories/.agent/agents/project-manager.md) | Cross-cutting | `gemini-2.5-pro` | `reviewAgainstPlan`, `approveDeliverable` |
 | **Orchestrator** | [orchestrator.md](file:///l:/math-stories/.agent/agents/orchestrator.md) | Cross-cutting | `gemini-2.5-pro` | `dispatchTask`, `assembleOutput` |
 | **Curriculum** | [curriculum.md](file:///l:/math-stories/.agent/agents/curriculum.md) | 1 | `gemini-2.5-flash` | `findOutcomesForQuery` |
@@ -15,13 +15,14 @@ Central index of all agents in the Math Stories WebApp system. Used by the Orche
 | **Characters** | [characters.md](file:///l:/math-stories/.agent/agents/characters.md) | 5 | `gemini-2.5-flash` | `getDigitCharacters` |
 | **Personalization** | [personalization.md](file:///l:/math-stories/.agent/agents/personalization.md) | 6 | `gemini-2.5-flash` | `recordFeedback` |
 | **Integrity Validator** | [integrity-validator.md](file:///l:/math-stories/.agent/agents/integrity-validator.md) | Cross-cutting | `gemini-2.5-pro` | `validateOutput` |
+| **Instructional Designer** | [instructional-designer.md](file:///l:/math-stories/.agent/agents/instructional-designer.md) | Cross-cutting | `gemini-2.5-pro` | `wireframeUI`, `applyStyling` |
 
 ## Tool Index
 
 Complete mapping of project tools (Section 2) to owning agents:
 
 | # | Tool | Owner Agent |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `findOutcomesForQuery(query) -> Outcome[]` | Curriculum |
 | 2 | `getConceptForOutcome(outcomeCode) -> Concept` | Concept Logic |
 | 3 | `getPedagogyForConcept(conceptId) -> PedagogyPlan` | Pedagogy |
@@ -38,7 +39,7 @@ Complete mapping of project tools (Section 2) to owning agents:
 
 ## Call Flow Reference
 
-```
+```text
 Student Query
   → Orchestrator.dispatchTask
     → Curriculum.findOutcomesForQuery

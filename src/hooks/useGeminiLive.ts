@@ -47,7 +47,7 @@ export function useGeminiLive() {
     setIsSpeaking(false);
   }, [cleanupAudio]);
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (initialContext?: string) => {
     if (connectionState !== "disconnected") return;
     
     setConnectionState("connecting");
@@ -94,7 +94,7 @@ export function useGeminiLive() {
       const connectPromise = new Promise<void>((resolve, reject) => {
         ws.onopen = () => {
           // Send initial setup message connecting to gemini-2.0-flash-exp (or whichever model)
-          const setupMsg = {
+          const setupMsg: any = {
             setup: {
               model: "models/gemini-2.0-flash-exp",
               generationConfig: {
@@ -109,6 +109,13 @@ export function useGeminiLive() {
               },
             },
           };
+
+          if (initialContext) {
+            setupMsg.setup.systemInstruction = {
+              parts: [{ text: `You are MathBot, a live interactive educational agent. The student has selected the following math goal: ${initialContext}. Guide them through a story, building foundational truths step-by-step.` }],
+            };
+          }
+
           ws.send(JSON.stringify(setupMsg));
           resolve();
         };
