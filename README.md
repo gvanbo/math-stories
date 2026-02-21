@@ -11,6 +11,32 @@ Teach Grade 4 math concepts through stories that are:
 - **Conceptually grounded** — every story uses visualizable models and reasoning strategies (never rote memorization)
 - **Personalized** — students provide inputs (verbs, nouns, settings) that shape the narrative without altering the math
 - **Character-driven** — digit characters (0-9) each embody a true mathematical property
+---
+
+## Setup
+
+1. Clone the repository
+2. Copy the environment template:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Fill in your values in `.env`:
+
+   | Variable | Description | Required |
+   |---|---|---|
+   | `GOOGLE_CLOUD_PROJECT_ID` | Your GCP project ID | Yes |
+   | `GOOGLE_CLOUD_REGION` | GCP region (default: `us-central1`) | Yes |
+   | `GEMINI_API_KEY` | Gemini API key | Yes |
+   | `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account JSON | Optional |
+
+4. Install dependencies and run:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
 
 ---
 
