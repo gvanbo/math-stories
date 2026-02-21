@@ -8,7 +8,7 @@ import type {
 } from "@/types";
 import { buildStoryContext } from "./buildStoryContext";
 import { getConceptForOutcome } from "@/layers/concept/tools/getConceptForOutcome";
-import { MULTIPLICATION_CONCEPTS } from "@/layers/concept/data/concepts";
+import { ALL_CONCEPTS } from "@/lib/registry";
 
 /**
  * constructStory — Core.md Section 3 Story Construction Pipeline
@@ -35,7 +35,7 @@ export function constructStory(
   if (!context) return null;
 
   // Find the concept for self-check
-  const concept = MULTIPLICATION_CONCEPTS.find((c) => c.id === conceptId);
+  const concept = ALL_CONCEPTS.find((c) => c.id === conceptId);
   if (!concept) return null;
 
   // Generate beat narratives (step 4)
