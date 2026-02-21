@@ -134,6 +134,43 @@ export interface StoryContext {
   narrativePrompt: string;
 }
 
+/** A fully generated story from the construction pipeline */
+export interface GeneratedStory {
+  id: string;
+  conceptId: string;
+  outcomeCode: string;
+  context: StoryContext;
+  /** Generated narrative text for each beat */
+  beatNarratives: BeatNarrative[];
+  /** Self-check result (Core.md Section 3 step 5) */
+  selfCheck: SelfCheckResult;
+  timestamp: string;
+}
+
+/** A single beat's generated narrative */
+export interface BeatNarrative {
+  beatType: BeatType;
+  narrative: string;
+  /** Models explicitly described in this beat */
+  modelsUsed: string[];
+  /** Character voices used in this beat */
+  characterVoices: string[];
+}
+
+/** Result of the agent self-check (Core.md Section 3 step 5) */
+export interface SelfCheckResult {
+  /** "Explain the math idea this story teaches" */
+  mathExplanation: string;
+  /** Does the explanation match Concept.models[]? */
+  modelsMatch: boolean;
+  /** Does the explanation match Concept.strategies[]? */
+  strategiesMatch: boolean;
+  /** Overall pass/fail */
+  passes: boolean;
+  /** If failed, what mismatched */
+  mismatches: string[];
+}
+
 /** Student-provided Mad-Libs inputs */
 export interface UserInputs {
   verbs: string[];
