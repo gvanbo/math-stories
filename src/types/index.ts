@@ -155,6 +155,8 @@ export interface BeatNarrative {
   modelsUsed: string[];
   /** Character voices used in this beat */
   characterVoices: string[];
+  /** Prompt for Imagen 3 or Veo to generate background media for this beat */
+  visualPrompt?: string;
 }
 
 /** Result of the agent self-check (Core.md Section 3 step 5) */

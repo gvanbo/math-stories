@@ -75,6 +75,7 @@ function generateBeatNarratives(
           narrative: `Welcome to ${inputs.place}! Our hero ${inputs.sidekick} was feeling ${inputs.mood}. They ${inputs.verbs[0] || "walked"} toward a mysterious discovery.`,
           modelsUsed: [],
           characterVoices: [],
+          visualPrompt: `A vibrant, kid-friendly illustration of a ${inputs.mood} ${inputs.sidekick} in ${inputs.place}. Style: colorful digital storybook art, cheerful, wide shot.`,
         };
 
       case "groupsIntro":
@@ -83,6 +84,7 @@ function generateBeatNarratives(
           narrative: `${inputs.sidekick} found ${inputs.nouns[0] || "items"} arranged in equal groups! "Look!" they exclaimed. "There are groups, and each group has the same number!"`,
           modelsUsed: [],
           characterVoices: getCharacterVoices(context, []),
+          visualPrompt: `A fun illustration of equal groups of ${inputs.nouns[0] || "items"} scattered around ${inputs.place}. The ${inputs.sidekick} is pointing at them excitedly. Style: colorful children's book.`,
         };
 
       case "representation":
@@ -91,6 +93,7 @@ function generateBeatNarratives(
           narrative: `${inputs.sidekick} drew a picture to organize everything. They made an array — rows and columns — to see all the ${inputs.nouns[0] || "items"} at once. "When I arrange them in equal groups, I can see the pattern!"`,
           modelsUsed: context.skeleton.requiredModels,
           characterVoices: [],
+          visualPrompt: `A neatly drawn grid or array of ${inputs.nouns[0] || "items"} showing clear rows and columns, as if drawn by ${inputs.sidekick} in ${inputs.place}. Style: educational, clear and engaging.`,
         };
 
       case "reasoning":
@@ -99,6 +102,7 @@ function generateBeatNarratives(
           narrative: `"I get it!" said ${inputs.sidekick}. "${concept.whyItWorks}" The ${inputs.nouns[0] || "items"} showed exactly why multiplication is just a fast way to count equal groups.`,
           modelsUsed: concept.models.map((m) => m.id),
           characterVoices: getCharacterVoices(context, concept.models.map((m) => m.id)),
+          visualPrompt: `The ${inputs.sidekick} having a 'lightbulb' moment in ${inputs.place}, surrounded by organized ${inputs.nouns[0] || "items"}. Style: bright, optimistic, magical math discovery.`,
         };
 
       case "generalize":
@@ -107,6 +111,7 @@ function generateBeatNarratives(
           narrative: `${inputs.sidekick} wondered: "Does this work for ANY equal groups?" They tried it with different numbers and — yes! The same strategy worked every time.`,
           modelsUsed: [],
           characterVoices: [],
+          visualPrompt: `Various sizes of groups of ${inputs.nouns[0] || "items"} floating mathematically in ${inputs.place}, with glowing numbers. Style: inspiring learning moment, abstract background.`,
         };
 
       case "reflection":
@@ -115,6 +120,7 @@ function generateBeatNarratives(
           narrative: `Feeling ${inputs.mood}, ${inputs.sidekick} reflected: "Multiplication is a fast way to count equal groups, and I can use arrays and diagrams to see why it works!"`,
           modelsUsed: [],
           characterVoices: [],
+          visualPrompt: `A happy, confident ${inputs.sidekick} waving goodbye in ${inputs.place}, having solved the mathematical mystery. Style: joyful, colorful storybook ending.`,
         };
 
       default:
@@ -123,6 +129,7 @@ function generateBeatNarratives(
           narrative: beat.description,
           modelsUsed: [],
           characterVoices: [],
+          visualPrompt: `An atmospheric view of ${inputs.place} with ${inputs.sidekick}. Style: conceptual, children's storybook.`,
         };
     }
   });

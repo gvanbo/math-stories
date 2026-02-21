@@ -12,6 +12,7 @@ import {
   generateStory,
   startComprehension,
   submitExplanation,
+  explainMathGoal,
   verifyToolRouting,
   verifyComprehensionCheck,
 } from '@/lib/interactionController';
@@ -121,12 +122,20 @@ describe('Interaction Controller — step sequence', () => {
     expect(state.step).toBe('idle');
   });
 
-  it('selectOutcome transitions to gathering_inputs', () => {
+  it('selectOutcome transitions to explaining_goal', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
-    expect(state.step).toBe('gathering_inputs');
+    expect(state.step).toBe('explaining_goal');
     expect(state.concept).not.toBeNull();
+  });
+
+  it('explainMathGoal transitions to gathering_inputs', () => {
+    let state = createInteraction('test-user');
+    state = processQuery(state, 'multiplication');
+    state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
+    expect(state.step).toBe('gathering_inputs');
   });
 
   it('selectOutcome records getConceptForOutcome call', () => {
@@ -141,6 +150,7 @@ describe('Interaction Controller — step sequence', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     expect(state.step).toBe('generating_story');
     expect(state.userInputs).toEqual(TEST_INPUTS);
@@ -150,6 +160,7 @@ describe('Interaction Controller — step sequence', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     expect(state.step).toBe('narrating');
@@ -160,6 +171,7 @@ describe('Interaction Controller — step sequence', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     expect(state.validationResult).not.toBeNull();
@@ -170,6 +182,7 @@ describe('Interaction Controller — step sequence', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     state = startComprehension(state);
@@ -186,6 +199,7 @@ describe('verifyToolRouting', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     const routing = verifyToolRouting(state);
@@ -206,11 +220,13 @@ describe('verifyToolRouting', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     const routing = verifyToolRouting(state);
     expect(routing.toolSequence[0]).toBe('findOutcomesForQuery');
     expect(routing.toolSequence[1]).toBe('getConceptForOutcome');
+    expect(routing.toolSequence[2]).toBe('searchKnowledge');
   });
 });
 
@@ -221,6 +237,7 @@ describe('verifyComprehensionCheck', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     const check = verifyComprehensionCheck(state);
@@ -232,6 +249,7 @@ describe('verifyComprehensionCheck', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     const check = verifyComprehensionCheck(state);
@@ -242,6 +260,7 @@ describe('verifyComprehensionCheck', () => {
     let state = createInteraction('test-user');
     state = processQuery(state, 'multiplication');
     state = selectOutcome(state, state.outcomes[0].code);
+    state = explainMathGoal(state);
     state = setUserInputs(state, TEST_INPUTS);
     state = generateStory(state);
     state = startComprehension(state);
@@ -265,6 +284,7 @@ describe('Full Interaction Simulations — 3 diverse sessions', () => {
       let state = createInteraction(`sim-user-${i}`);
       state = processQuery(state, 'multiplication');
       state = selectOutcome(state, state.outcomes[0].code);
+      state = explainMathGoal(state);
       state = setUserInputs(state, simInputs[i]);
       state = generateStory(state);
       state = startComprehension(state);
