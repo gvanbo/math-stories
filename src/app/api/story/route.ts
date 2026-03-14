@@ -10,7 +10,7 @@ import type { UserInputs, Feedback } from '@/types';
  *
  * Actions:
  *  - "search": Find outcomes for a query
- *  - "generate": Generate a story for a concept + user inputs
+ *  - "generate": Generate a story for a concept + user inputs (calls Gemini AI)
  *  - "feedback": Record feedback
  */
 export async function POST(request: NextRequest) {
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Construct the story
-        const story = constructStory(
+        // Construct the story — await required as Gemini AI generation is async
+        const story = await constructStory(
           concept.id,
           outcomeCode,
           {
