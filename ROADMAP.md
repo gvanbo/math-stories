@@ -207,6 +207,35 @@
 
 ---
 
+## Milestone 8 — Multimodal & Generative Media
+
+**Goal:** Bring interactive storybook graphics to life with Google Imagen 3, build generative visual models for digit characters, and enable realtime voice-first interaction.
+
+**Owner:** Story Logic Agent, Characters Agent, Orchestrator
+
+| # | Task | TDD Pattern | Status |
+|---|---|---|---|
+| 8.1 | **TEST:** `BeatVisualSpec` generation — assert sceneType, imagenPrompt, colorPalette populated | Type + content validation tests | `[x]` |
+| 8.2 | **IMPL:** `beatVisualMapper.ts` with BEAT_TO_SCENE_TYPE and mapBeatToVisualSpec | Make 8.1 pass | `[x]` |
+| 8.3 | **TEST:** `constructStory` integration — assert every BeatNarrative carries visualSpec | End-to-end pipeline tests | `[x]` |
+| 8.4 | **IMPL:** Integrate `attachVisualSpecsToBeats` into constructStory pipeline | Make 8.3 pass | `[x]` |
+| 8.5 | **TEST:** `DigitCharacterFull` — assert basePrompt, colorPalette, expressions, imagenStyleTags | Visual model tests | `[ ]` |
+| 8.6 | **IMPL:** Expand `DigitCharacter` with `DigitCharacterVisual` fields for Imagen 3 | Make 8.5 pass | `[ ]` |
+| 8.7 | **TEST:** Imagen 3 service integration — mock GCS caching, prompt quality checks | Service + integration tests | `[ ]` |
+| 8.8 | **IMPL:** `ImagenService.generateSceneImages` with GCS caching layer | Make 8.7 pass | `[ ]` |
+| 8.9 | **TEST:** UI component for displaying scene images with lazy-loading | Render + load tests | `[ ]` |
+| 8.10 | **IMPL:** StoryDisplay component consumes BeatVisualSpec and SceneImage | Make 8.9 pass | `[ ]` |
+| 8.11 | **TEST:** Voice-first interaction (Live API) — audio input → story → audio output | E2E voice tests | `[ ]` |
+| 8.12 | **IMPL:** Integrate Gemini Live API for voice-first student interaction | Make 8.11 pass | `[ ]` |
+| 8.13 | **VALIDATE:** Generate 3 full multimodal stories (text + images + audio) through Integrity Validator | 100% pass rate | `[ ]` |
+| 8.14 | **PM GATE:** Project Manager reviews Milestone 8 | No drift from Core.md | `[ ]` |
+
+**Exit criteria:** Stories generate with BeatVisualSpec attached, Imagen 3 generates scene images for at least 1 concept, voice interaction works, PM approves.
+
+**Current Status:** Tasks 8.1-8.4 completed — beat visual mapping and constructStory integration done. Remaining: generative character visuals, Imagen service, UI components, Live API integration.
+
+---
+
 ## Milestone Summary
 
 | Milestone | Goal | Key Deliverable | PM Gate |
