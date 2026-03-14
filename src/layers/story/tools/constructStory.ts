@@ -7,55 +7,34 @@ import type {
   Concept,
 } from "@/types";
 import { buildStoryContext } from "./buildStoryContext";
-import { getConceptForOutcome } from "@/layers/concept/tools/getConceptForOutcome";
 import { ALL_CONCEPTS } from "@/lib/registry";
-import {
-  attachVisualSpecsToBeats,
-  buildSettingFromContext,
-} from "../beatVisualMapper";
+import { generateText } from "@/lib/geminiClient";
 
 /**
  * constructStory — Core.md Section 3 Story Construction Pipeline
  *
- * Process (from Core.md):
+ * Process:
  * 1. Get StorySkeleton (via buildStoryContext)
  * 2. Get DigitCharacters (via buildStoryContext)
  * 3. Build StoryContext (assembles skeleton + characters + inputs)
- * 4. Attach visual specs to personalized beats (via beatVisualMapper)
- * 5. Generate beat narratives from the context
- * 6. Run self-check
- *
- * Constraints:
- * - Student inputs fill slots (place, action, sidekick, mood)
- * - They do NOT alter: groupsIntro logic, model choice, or "why this works"
+ * 4. Generate beat narratives from Gemini (AI-powered, personalized)
+ * 5. Run self-check
  */
-export function constructStory(
+export async function constructStory(
   conceptId: string,
   outcomeCode: string,
   profile: UserProfile,
   inputs: UserInputs,
-): GeneratedStory | null {
-  // Build the story context (steps 1-3)
+): Promise<GeneratedStory | null> {
   const context = buildStoryContext(conceptId, profile, inputs);
   if (!context) return null;
 
-  // Find the concept for self-check
   const concept = ALL_CONCEPTS.find((c) => c.id === conceptId);
   if (!concept) return null;
 
-  // Step 4: Attach visual specs to beats
-  const setting = buildSettingFromContext(context);
-  const beatsWithVisuals = attachVisualSpecsToBeats(context, setting);
+  // Generate beat narratives using Gemini
+  const beatNarratives = await generateBeatNarratives(context, concept, inputs);
 
-  // Step 5: Generate beat narratives with visual specs attached
-  const beatNarratives = generateBeatNarratives(
-    context,
-    concept,
-    inputs,
-    beatsWithVisuals,
-  );
-
-  // Run self-check (step 6)
   const story: GeneratedStory = {
     id: `story-${conceptId}-${Date.now()}`,
     conceptId,
@@ -65,108 +44,79 @@ export function constructStory(
     selfCheck: { mathExplanation: "", modelsMatch: true, strategiesMatch: true, passes: true, mismatches: [] },
     timestamp: new Date().toISOString(),
   };
+
   story.selfCheck = selfCheckStory(story, concept);
   return story;
 }
 
 /**
- * Generate narrative text for each beat in the skeleton.
- * Uses the personalized context to create kid-friendly text
- * while preserving the mathematical structure.
- * Each beat's visualSpec (from beatVisualMapper) is carried through.
+ * Generate narrative text for each beat using Gemini AI.
+ * Each beat gets a targeted prompt that preserves mathematical structure
+ * while personalizing for the student's chosen place, sidekick, mood, and items.
  */
-function generateBeatNarratives(
+async function generateBeatNarratives(
   context: ReturnType<typeof buildStoryContext> & object,
   concept: Concept,
   inputs: UserInputs,
-  beatsWithVisuals: ReturnType<typeof attachVisualSpecsToBeats>,
-): BeatNarrative[] {
-  return beatsWithVisuals.map((beat) => {
-    switch (beat.type) {
-      case "setup":
-        return {
-          beatType: "setup" as const,
-          narrative: `Welcome to ${inputs.place}! Our hero ${inputs.sidekick} was feeling ${inputs.mood}. They ${inputs.verbs[0] || "walked"} toward a mysterious discovery.`,
-          modelsUsed: [],
-          characterVoices: [],
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A vibrant, kid-friendly illustration of a ${inputs.mood} ${inputs.sidekick} in ${inputs.place}. Style: colorful digital storybook art, cheerful, wide shot.`,
-        };
-      case "groupsIntro":
-        return {
-          beatType: "groupsIntro" as const,
-          narrative: `${inputs.sidekick} found ${inputs.nouns[0] || "items"} arranged in equal groups! "Look!" they exclaimed. "There are groups, and each group has the same number!"`,
-          modelsUsed: [],
-          characterVoices: getCharacterVoices(context, []),
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A fun illustration of equal groups of ${inputs.nouns[0] || "items"} scattered around ${inputs.place}. The ${inputs.sidekick} is pointing at them excitedly. Style: colorful children's book.`,
-        };
-      case "representation":
-        return {
-          beatType: "representation" as const,
-          narrative: `${inputs.sidekick} drew a picture to organize everything. They made an array — rows and columns — to see all the ${inputs.nouns[0] || "items"} at once. "When I arrange them in equal groups, I can see the pattern!"`,
-          modelsUsed: context.skeleton.requiredModels,
-          characterVoices: [],
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A neatly drawn grid or array of ${inputs.nouns[0] || "items"} showing clear rows and columns, as if drawn by ${inputs.sidekick} in ${inputs.place}. Style: educational, clear and engaging.`,
-        };
-      case "reasoning":
-        return {
-          beatType: "reasoning" as const,
-          narrative: `"I get it!" said ${inputs.sidekick}. "${concept.whyItWorks}" The ${inputs.nouns[0] || "items"} showed exactly why multiplication is just a fast way to count equal groups.`,
-          modelsUsed: concept.models.map((m) => m.id),
-          characterVoices: getCharacterVoices(context, concept.models.map((m) => m.id)),
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `The ${inputs.sidekick} having a 'lightbulb' moment in ${inputs.place}, surrounded by organized ${inputs.nouns[0] || "items"}. Style: bright, optimistic, magical math discovery.`,
-        };
-      case "generalize":
-        return {
-          beatType: "generalize" as const,
-          narrative: `${inputs.sidekick} wondered: "Does this work for ANY equal groups?" They tried it with different numbers and — yes! The same strategy worked every time.`,
-          modelsUsed: [],
-          characterVoices: [],
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `Various sizes of groups of ${inputs.nouns[0] || "items"} floating mathematically in ${inputs.place}, with glowing numbers. Style: inspiring learning moment, abstract background.`,
-        };
-      case "reflection":
-        return {
-          beatType: "reflection" as const,
-          narrative: `Feeling ${inputs.mood}, ${inputs.sidekick} reflected: "Multiplication is a fast way to count equal groups, and I can use arrays and diagrams to see why it works!"`,
-          modelsUsed: [],
-          characterVoices: [],
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A happy, confident ${inputs.sidekick} waving goodbye in ${inputs.place}, having solved the mathematical mystery. Style: joyful, colorful storybook ending.`,
-        };
-      default:
-        return {
-          beatType: beat.type,
-          narrative: beat.description,
-          modelsUsed: [],
-          characterVoices: [],
-          visualSpec: beat.visualSpec,
-          visualPrompt: beat.visualSpec?.imagenPrompt ?? `An atmospheric view of ${inputs.place} with ${inputs.sidekick}. Style: conceptual, children's storybook.`,
-        };
+): Promise<BeatNarrative[]> {
+  const results: BeatNarrative[] = [];
+
+  for (const beat of context.skeleton.beats) {
+    const basePrompt = `You are a Grade 4 math story narrator. Write a SHORT, fun, kid-friendly paragraph (3-5 sentences max) for a math story beat.
+Student's chosen setting: ${inputs.place}
+Student's chosen sidekick/character: ${inputs.sidekick}
+Student's chosen mood: ${inputs.mood}
+Student's chosen items: ${inputs.nouns?.[0] ?? "items"}
+Math concept: ${concept.whyItWorks}
+
+Beat type: "${beat.type}"
+Beat description: ${beat.description}
+
+Rules:
+- Use the student's words naturally in the story
+- Keep language simple (Grade 4 reading level)
+- Be funny and memorable
+- Do NOT change the math — it must be accurate
+- End with [IMAGE: a short visual prompt for this scene suitable for an AI image generator]`;
+
+    let narrative = "";
+    let visualPrompt = "";
+
+    try {
+      const response = await generateText(basePrompt);
+      // Split out the image prompt if present
+      const imageMatch = response.match(/\[IMAGE:\s*(.+?)\]$/s);
+      if (imageMatch) {
+        visualPrompt = imageMatch[1].trim();
+        narrative = response.replace(/\[IMAGE:\s*.+?\]$/s, "").trim();
+      } else {
+        narrative = response.trim();
+        visualPrompt = `A colorful children's storybook illustration of ${inputs.sidekick} in ${inputs.place} during a ${beat.type} math moment.`;
+      }
+    } catch (err) {
+      console.error(`Gemini beat generation failed for beat "${beat.type}":`, err);
+      // Graceful fallback to template text
+      narrative = `${inputs.sidekick} was in ${inputs.place} and discovered something amazing about ${inputs.nouns?.[0] ?? "math"}!`;
+      visualPrompt = `A cheerful cartoon of ${inputs.sidekick} in ${inputs.place}.`;
     }
-  });
+
+    results.push({
+      beatType: beat.type,
+      narrative,
+      modelsUsed: beat.type === "reasoning" ? concept.models.map((m) => m.id) : [],
+      characterVoices:
+        context.characters.length > 0 && beat.type === "groupsIntro"
+          ? [context.characters[0].voiceStyle]
+          : [],
+      visualPrompt,
+    });
+  }
+
+  return results;
 }
 
 /**
- * Get character voices for beats that involve digit characters.
- */
-function getCharacterVoices(
-  context: ReturnType<typeof buildStoryContext> & object,
-  modelIds: string[],
-): string[] {
-  if (context.characters.length === 0) return [];
-  // Include first character's voice style as representative
-  return [context.characters[0].voiceStyle];
-}
-
-/**
- * selfCheckStory — Core.md Section 3 Step 6
- *
- * "Explain the math idea this story teaches."
- * This explanation must match Concept's models[] and strategies[], or regenerate.
+ * selfCheckStory — Core.md Section 3 Step 5
  */
 export function selfCheckStory(
   story: GeneratedStory,
@@ -174,15 +124,11 @@ export function selfCheckStory(
 ): SelfCheckResult {
   const mismatches: string[] = [];
 
-  // Gather all models used across beat narratives
   const allModelsUsed = new Set<string>();
   for (const bn of story.beatNarratives) {
-    for (const m of bn.modelsUsed) {
-      allModelsUsed.add(m);
-    }
+    for (const m of bn.modelsUsed) allModelsUsed.add(m);
   }
 
-  // Check: at least one concept model is referenced in the story
   const conceptModelIds = concept.models.map((m) => m.id);
   const modelsMatch = conceptModelIds.some((id) => allModelsUsed.has(id));
   if (!modelsMatch) {
@@ -191,33 +137,18 @@ export function selfCheckStory(
     );
   }
 
-  // Check: concept strategies are relevant (story should reference reasoning)
   const reasoningBeat = story.beatNarratives.find((b) => b.beatType === "reasoning");
   const strategiesMatch = reasoningBeat !== undefined && reasoningBeat.narrative.length > 0;
   if (!strategiesMatch) {
     mismatches.push("Missing or empty reasoning beat — strategies not demonstrated");
   }
 
-  // Check: visual specs are attached to beat narratives
-  const beatsWithVisuals = story.beatNarratives.filter((b) => b.visualSpec !== undefined);
-  if (beatsWithVisuals.length === 0) {
-    mismatches.push("No beat narratives have visualSpec attached — beatVisualMapper integration may be missing");
-  }
-
-  // Build the math explanation
   const mathExplanation = [
     `This story teaches: ${concept.whyItWorks}`,
     `Models used: ${[...allModelsUsed].join(", ") || "none"}`,
     `Strategies available: ${concept.strategies.map((s) => s.name).join(", ")}`,
-    `The story follows the ${story.beatNarratives.length}-beat structure, progressing from setup through reasoning to reflection.`,
-    `Visual specs attached: ${beatsWithVisuals.length}/${story.beatNarratives.length} beats.`,
+    `The story follows the ${story.beatNarratives.length}-beat structure.`,
   ].join(" ");
 
-  return {
-    mathExplanation,
-    modelsMatch,
-    strategiesMatch,
-    passes: mismatches.length === 0,
-    mismatches,
-  };
+  return { mathExplanation, modelsMatch, strategiesMatch, passes: mismatches.length === 0, mismatches };
 }
