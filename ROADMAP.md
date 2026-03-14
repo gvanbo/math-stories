@@ -248,6 +248,8 @@
 | **M5** | UI | Student-facing web app | ✓ |
 | **M6** | AI Host | Live interaction | ✓ |
 | **M7** | Expansion | 2 more topics + hardening | ✓ |
+| **M8** | Multimodal & Generative Media | Visual models + Imagen 3 + voice | ✓ |
+
 
 > [!CAUTION]
 > **No milestone proceeds without its PM Gate passing.** If drift is detected, the milestone is blocked until remediation is complete and the Project Manager re-approves.
