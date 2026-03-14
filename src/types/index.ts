@@ -33,7 +33,19 @@ export interface Concept {
 export interface Model {
   id: string;
   name: string;
-  type: "equalGroups" | "array" | "numberLine" | "area" | "decomposition";
+  type:
+    | "equalGroups"
+    | "array"
+    | "numberLine"
+    | "area"
+    | "decomposition"
+    | "barModel"
+    | "numberTalk"
+    | "arrayExploration"
+    | "numberlineJourney"
+    | "errorAnalysis"
+    | "whichOneDoesntBelong"
+    | "anchorTask";
   description: string;
 }
 
@@ -41,13 +53,57 @@ export interface Model {
 export interface Strategy {
   id: string;
   name: string;
-  type: "doublingHalving" | "makeTen" | "factFamilies";
+  type:
+    | "doublingHalving"
+    | "makeTen"
+    | "factFamilies"
+    | "thinkAloud"
+    | "metacognition"
+    | "errorDetection"
+    | "openMiddle";
   description: string;
 }
 
 // ---------------------------------------------------------------------------
 // Layer 3: Pedagogy
 // ---------------------------------------------------------------------------
+
+/** Interaction mode for a pedagogy tool */
+export type PedagogyInteractionType =
+  | "studentInput"
+  | "hostDemonstration"
+  | "collaborative";
+
+/** Reference to a pedagogy tool by its id */
+export type PedagogyToolId =
+  | "numberTalks"
+  | "barModels"
+  | "arrayExploration"
+  | "numberlineJourneys"
+  | "thinkAloud"
+  | "errorAnalysis"
+  | "whichOneDoesntBelong"
+  | "anchorTask"
+  | "cpa";
+
+/** Scene types for Imagen 3 generation */
+export type SceneType =
+  | "wideEstablishingShot"
+  | "closeUpReaction"
+  | "manipulativeLayout"
+  | "diagramVisual"
+  | "characterThinking"
+  | "celebrationScene"
+  | "pedagogyToolDiagram";
+
+/** Expression variants for character portraits */
+export type ExpressionType =
+  | "happy"
+  | "confused"
+  | "triumphant"
+  | "thinking"
+  | "surprised"
+  | "encouraging";
 
 /** Pedagogical plan for teaching a concept */
 export interface PedagogyPlan {
@@ -63,12 +119,18 @@ export interface PedagogyPlan {
     advanced: DifferentiationLevel;
   };
   checksForUnderstanding: CheckForUnderstanding[];
+  toolSelection: {
+    concrete: PedagogyToolId[];
+    pictorial: PedagogyToolId[];
+    symbolic: PedagogyToolId[];
+  };
 }
 
 export interface StageDescription {
   description: string;
   activities: string[];
   materials: string[];
+  toolIds?: PedagogyToolId[];
 }
 
 export interface DifferentiationLevel {
@@ -79,7 +141,6 @@ export interface DifferentiationLevel {
 export interface CheckForUnderstanding {
   id: string;
   prompt: string;
-  /** Must require explanation, not just an answer */
   requiresExplanation: boolean;
   expectedResponse: string;
 }
@@ -95,6 +156,18 @@ export interface LessonPlan {
   hostNotes: string;
 }
 
+/** A pedagogical tool definition */
+export interface PedagogyTool {
+  id: PedagogyToolId;
+  name: string;
+  category: "concrete" | "pictorial" | "symbolic" | "metacognitive";
+  gradeAppropriateness: string;
+  hostScript: string;
+  interactionType: PedagogyInteractionType;
+  imagenSceneType: SceneType;
+  mathAreas: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Layer 4: Story Logic
 // ---------------------------------------------------------------------------
@@ -108,12 +181,42 @@ export type BeatType =
   | "generalize"
   | "reflection";
 
+/** Full specification for generating an Imagen 3 scene */
+export interface BeatVisualSpec {
+  sceneType: SceneType;
+  characters: number[];
+  setting: string;
+  colorPalette: string[];
+  mood: "playful" | "curious" | "triumphant" | "calm" | "dramatic";
+  imagenPrompt: string;
+  pedagogyToolId?: PedagogyToolId;
+}
+
+/** Cache key for a generated scene image */
+export interface ImageCacheKey {
+  characterId: number;
+  beatType: BeatType;
+  conceptId: string;
+}
+
+/** A generated scene image with cache metadata */
+export interface SceneImage {
+  beatType: BeatType;
+  characterId: number;
+  conceptId: string;
+  imageUrl: string;
+  gcsCacheKey: string;
+  generatedAt: string;
+  sceneType: SceneType;
+  prompt: string;
+}
+
 /** A single beat in a story skeleton */
 export interface Beat {
   type: BeatType;
   description: string;
-  /** Slots that can be filled with student/personalization inputs */
   slots: string[];
+  visualSpec?: BeatVisualSpec;
 }
 
 /** A story skeleton encoding a concept */
@@ -128,7 +231,7 @@ export interface StorySkeleton {
 export interface StoryContext {
   conceptId: string;
   skeleton: StorySkeleton;
-  characters: DigitCharacter[];
+  characters: DigitCharacterFull[];
   userInputs: UserInputs;
   personalizedBeats: Beat[];
   narrativePrompt: string;
@@ -140,9 +243,7 @@ export interface GeneratedStory {
   conceptId: string;
   outcomeCode: string;
   context: StoryContext;
-  /** Generated narrative text for each beat */
   beatNarratives: BeatNarrative[];
-  /** Self-check result (Core.md Section 3 step 5) */
   selfCheck: SelfCheckResult;
   timestamp: string;
 }
@@ -151,25 +252,18 @@ export interface GeneratedStory {
 export interface BeatNarrative {
   beatType: BeatType;
   narrative: string;
-  /** Models explicitly described in this beat */
   modelsUsed: string[];
-  /** Character voices used in this beat */
   characterVoices: string[];
-  /** Prompt for Imagen 3 or Veo to generate background media for this beat */
-  visualPrompt?: string;
+  visualSpec?: BeatVisualSpec;
+  sceneImage?: SceneImage;
 }
 
 /** Result of the agent self-check (Core.md Section 3 step 5) */
 export interface SelfCheckResult {
-  /** "Explain the math idea this story teaches" */
   mathExplanation: string;
-  /** Does the explanation match Concept.models[]? */
   modelsMatch: boolean;
-  /** Does the explanation match Concept.strategies[]? */
   strategiesMatch: boolean;
-  /** Overall pass/fail */
   passes: boolean;
-  /** If failed, what mismatched */
   mismatches: string[];
 }
 
@@ -190,10 +284,33 @@ export interface UserInputs {
 export interface DigitCharacter {
   digit: number;
   trait: string;
-  /** Must be a true mathematical property */
   mathRule: string;
   voiceStyle: string;
 }
+
+/** Expression variant prompt suffixes for portrait generation */
+export interface CharacterExpressions {
+  happy: string;
+  confused: string;
+  triumphant: string;
+  thinking: string;
+  surprised: string;
+  encouraging: string;
+}
+
+/** Full visual model for Imagen 3 character generation */
+export interface DigitCharacterVisual {
+  basePrompt: string;
+  colorPalette: [string, string, string];
+  expressions: CharacterExpressions;
+  sceneProps: string[];
+  animationCue: string;
+  imagenStyleTags: string[];
+  archetype: string;
+}
+
+/** Complete character data combining identity and visual model */
+export type DigitCharacterFull = DigitCharacter & DigitCharacterVisual;
 
 /** A visual/interactive artifact */
 export interface Artifact {
