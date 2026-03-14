@@ -21,21 +21,29 @@
      * ChecksForUnderstanding: short tasks asking for explanation, not just answers.  
    * Rule: For each Concept:  
      * define all three stages,  
-     * define at least one check-for-understanding that requires explaining the idea.  
+     * define at least one check-for-understanding that requires explaining the idea.
+    * **PedagogyTool registry:**
+      * Defines concrete, pictorial, symbolic, and metacognitive tools.
+      * Each tool specifies: interaction mode (studentInput, hostDemonstration, collaborative), imagenSceneType for visual generation, and math areas.  
 4. Story Logic Layer (Concept Story Studio)  
    * Data model:  
      * StorySkeleton { conceptId, beats\[\], requiredModels\[\], forbiddenPatterns\[\] }.  
-     * Beat.type ∈ { setup, groupsIntro, representation, reasoning, generalize, reflection }.  
+     * Beat.type ∈ { setup, groupsIntro, representation, reasoning, generalize, reflection }.
+      * **BeatVisualSpec** { sceneType, characters[], setting, colorPalette[], mood, imagenPrompt, pedagogyToolId? }.  
    * Rule:  
      * Skeleton must encode the concept and required models (e.g., equal groups \+ array).  
      * forbiddenPatterns must include “pure mnemonic with no model or reasoning.”  
+      * **Every beat must generate a BeatVisualSpec** alongside narrative text — the AI host produces interactive storybook graphics via Imagen 3, not plain text alone.
 5. Characters & Artifacts Layer  
    * Data model:  
      * DigitCharacter { digit, trait, mathRule, voiceStyle }.  
-     * Artifact { id, type (character, animationTemplate, visualPromptCue), description }.  
+     * Artifact { id, type (character, animationTemplate, visualPromptCue), description }.
+      * **DigitCharacterVisual** { basePrompt, colorPalette[3], expressions, sceneProps[], animationCue, imagenStyleTags[], archetype }.
+      * **DigitCharacterFull** = DigitCharacter & DigitCharacterVisual (complete generative visual model for Imagen 3).  
    * Rule:  
      * DigitCharacter.mathRule must be a true property (e.g., 1 \= identity, 0 \= zero property, 2 \= doubling).​  
-     * Stories must respect these rules; traits cannot contradict math.  
+     * Stories must respect these rules; traits cannot contradict math.
+      * **DigitCharacterFull visual models** (basePrompts, colorPalettes, expressions) must be consistent with the digit's mathRule — agents must use these for Imagen 3 scene generation.  
 6. Personalization Layer  
    * Data model:  
      * UserProfile { id, preferences, readingLevel, humorLevel, modalityPrefs }.  
@@ -120,13 +128,15 @@ Interaction sequence:
    * calls getConceptForOutcome,  
    * briefly states: “We’re working on \[concept\] today.”  
 3. Host gathers student inputs (verbs, nouns).  
-4. Host calls buildStoryContext and narrates story using Live API audio.  
+4. Host calls buildStoryContext and narrates story using Live API audio.
+   * Host generates BeatVisualSpec for each beat (via attachVisualSpecsToBeats) and calls ImagenService to create scene images for the interactive storybook.  
 5. Host asks the student to explain the idea back (can be audio).  
 6. Optional: Host calls a summarization tool to store a concise summary of the student’s understanding.
 
 Rule:
 
 * All Live sessions must route through the tools; host never “freewheels” math logic without checking against Concept and StorySkeleton.
+   * Live sessions must generate interactive visual storybook tools (via Imagen 3 using BeatVisualSpec), not plain text alone.
 
 ---
 
