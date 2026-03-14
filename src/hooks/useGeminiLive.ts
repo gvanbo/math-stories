@@ -4,14 +4,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 export type ConnectionState = "disconnected" | "connecting" | "connected";
 
-// Correct Live API model for the Gemini Live Agent Challenge
-const LIVE_MODEL = "models/gemini-2.5-flash-preview-native-audio-dialog";
+// gemini-2.0-flash-exp works on Google AI Studio keys (free tier)
+// Switch to gemini-2.5-flash-preview-native-audio-dialog when on Vertex AI
+const LIVE_MODEL = "models/gemini-2.0-flash-exp";
 
-/**
- * useGeminiLive
- * Hook to manage bidirectional WebSocket connection with Gemini Live API.
- * Supports both Google AI Studio (GEMINI_API_KEY) and Vertex AI.
- */
 export function useGeminiLive() {
   const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
   const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
@@ -89,9 +85,9 @@ export function useGeminiLive() {
           if (initialContext) {
             (setupMsg.setup as Record<string, unknown>).systemInstruction = {
               parts: [{
-                text: `You are MathBot, a live interactive educational agent for Grade 4 students. 
-The student has selected the following math goal: ${initialContext}. 
-Guide them through a fun, memorable story using humor and relatable examples. 
+                text: `You are MathBot, a live interactive educational agent for Grade 4 students.
+The student has selected the following math goal: ${initialContext}.
+Guide them through a fun, memorable story using humor and relatable examples.
 Build foundational math truths step by step. Keep language simple and encouraging.
 When describing a visual scene, wrap the image description in [IMAGE: your description here].`,
               }],
@@ -140,7 +136,11 @@ When describing a visual scene, wrap the image description in [IMAGE: your descr
         }
       };
 
-      ws.onclose = () => { disconnect(); };
+      ws.onclose = (event) => {
+        // Log close code to help debug connection drops
+        console.warn(`WebSocket closed: code=${event.code} reason=${event.reason}`);
+        disconnect();
+      };
 
     } catch (err) {
       console.error("Gemini Live Connection Failed", err);
