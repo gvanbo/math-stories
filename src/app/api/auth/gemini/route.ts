@@ -2,15 +2,6 @@ import { GoogleAuth } from "google-auth-library";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  // For the Gemini Live WebSocket, we strongly prefer using the API key
-  // because browser WebSockets do not support adding an Authorization header.
-  if (process.env.GEMINI_API_KEY) {
-    return NextResponse.json({
-      useVertex: false,
-      geminiApiKey: process.env.GEMINI_API_KEY,
-    });
-  }
-
   try {
     const auth = new GoogleAuth({
       scopes: ["https://www.googleapis.com/auth/cloud-platform"],

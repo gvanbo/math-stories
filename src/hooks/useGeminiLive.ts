@@ -23,15 +23,12 @@ export function useGeminiLive() {
   const playbackWorkletRef = useRef<AudioWorkletNode | null>(null);
 
   const cleanupAudio = useCallback(() => {
-    if (recorderWorkletRef.current) recorderWorkletRef.current.disconnect();
     if (playbackWorkletRef.current) playbackWorkletRef.current.disconnect();
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-    }
     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       audioContextRef.current.close().catch(console.error);
     }
-    recorderWorkletRef.current = null;
+    playbackWorkletRef.current = null;
+    audioContextRef.current = null;
     playbackWorkletRef.current = null;
     mediaStreamRef.current = null;
     audioContextRef.current = null;
@@ -61,31 +58,20 @@ export function useGeminiLive() {
 
       let wsUrl = "";
       if (authData.useVertex) {
-        wsUrl = `wss://${authData.region}-aiplatform.googleapis.com/ws/google.cloud.aiplatform.v1beta1.LlmBidiService/BidiGenerateContent?project=${authData.projectId}&location=${authData.region}`;
+        wsUrl = `wss://${authData.region}-aiplatform.googleapis.com/ws/google.cloud.aiplatform.v1beta1.LlmBidiService/BidiGenerateContent?project=${authData.projectId}&location=${authData.region}&access_token=${authData.accessToken}`;
       } else {
         wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${authData.geminiApiKey}`;
       }
 
-      // 2. Setup Audio - Input at 16kHz, Output at 24kHz
+      // 2. Setup Audio - Output at 24kHz (No Microphone Input)
       const ac = new window.AudioContext({ sampleRate: 24000 });
       audioContextRef.current = ac;
 
-      await ac.audioWorklet.addModule("/worklets/recorder.worklet.js");
       await ac.audioWorklet.addModule("/worklets/playback.worklet.js");
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-
-      const source = ac.createMediaStreamSource(stream);
-      
-      const recorder = new AudioWorkletNode(ac, "recorder-worklet");
-      recorderWorkletRef.current = recorder;
 
       const playback = new AudioWorkletNode(ac, "playback-worklet");
       playbackWorkletRef.current = playback;
       playback.connect(ac.destination);
-
-      source.connect(recorder);
 
       // 3. Connect WebSocket
       const ws = new WebSocket(wsUrl);
@@ -176,31 +162,7 @@ export function useGeminiLive() {
         disconnect();
       };
 
-      // 4. Send Microphone audio to WS
-      recorder.port.onmessage = (e) => {
-        if (ws.readyState === WebSocket.OPEN) {
-          const pcm16Data = new Int16Array(e.data); // This is Float32 converted to Int16
-          // Convert Int16Array to base64
-          const uint8 = new Uint8Array(pcm16Data.buffer);
-          let binary = "";
-          for (let i = 0; i < uint8.length; i++) {
-            binary += String.fromCharCode(uint8[i]);
-          }
-          const base64 = btoa(binary);
-
-          const clientContent = {
-            realtimeInput: {
-              mediaChunks: [
-                {
-                  mimeType: "audio/pcm;rate=16000",
-                  data: base64,
-                },
-              ],
-            },
-          };
-          ws.send(JSON.stringify(clientContent));
-        }
-      };
+      // 4. (Microphone audio removed as per user request, Text via sendTextMessage only)
 
     } catch (err) {
       console.error("Gemini Live Connection Failed", err);
