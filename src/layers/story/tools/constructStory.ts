@@ -9,6 +9,10 @@ import type {
 import { buildStoryContext } from "./buildStoryContext";
 import { getConceptForOutcome } from "@/layers/concept/tools/getConceptForOutcome";
 import { ALL_CONCEPTS } from "@/lib/registry";
+import {
+  attachVisualSpecsToBeats,
+  buildSettingFromContext,
+} from "../beatVisualMapper";
 
 /**
  * constructStory — Core.md Section 3 Story Construction Pipeline
@@ -17,8 +21,9 @@ import { ALL_CONCEPTS } from "@/lib/registry";
  * 1. Get StorySkeleton (via buildStoryContext)
  * 2. Get DigitCharacters (via buildStoryContext)
  * 3. Build StoryContext (assembles skeleton + characters + inputs)
- * 4. Generate beat narratives from the context
- * 5. Run self-check
+ * 4. Attach visual specs to personalized beats (via beatVisualMapper)
+ * 5. Generate beat narratives from the context
+ * 6. Run self-check
  *
  * Constraints:
  * - Student inputs fill slots (place, action, sidekick, mood)
@@ -38,10 +43,19 @@ export function constructStory(
   const concept = ALL_CONCEPTS.find((c) => c.id === conceptId);
   if (!concept) return null;
 
-  // Generate beat narratives (step 4)
-  const beatNarratives = generateBeatNarratives(context, concept, inputs);
+  // Step 4: Attach visual specs to beats
+  const setting = buildSettingFromContext(context);
+  const beatsWithVisuals = attachVisualSpecsToBeats(context, setting);
 
-  // Run self-check (step 5)
+  // Step 5: Generate beat narratives with visual specs attached
+  const beatNarratives = generateBeatNarratives(
+    context,
+    concept,
+    inputs,
+    beatsWithVisuals,
+  );
+
+  // Run self-check (step 6)
   const story: GeneratedStory = {
     id: `story-${conceptId}-${Date.now()}`,
     conceptId,
@@ -51,9 +65,7 @@ export function constructStory(
     selfCheck: { mathExplanation: "", modelsMatch: true, strategiesMatch: true, passes: true, mismatches: [] },
     timestamp: new Date().toISOString(),
   };
-
   story.selfCheck = selfCheckStory(story, concept);
-
   return story;
 }
 
@@ -61,13 +73,15 @@ export function constructStory(
  * Generate narrative text for each beat in the skeleton.
  * Uses the personalized context to create kid-friendly text
  * while preserving the mathematical structure.
+ * Each beat's visualSpec (from beatVisualMapper) is carried through.
  */
 function generateBeatNarratives(
   context: ReturnType<typeof buildStoryContext> & object,
   concept: Concept,
   inputs: UserInputs,
+  beatsWithVisuals: ReturnType<typeof attachVisualSpecsToBeats>,
 ): BeatNarrative[] {
-  return context.skeleton.beats.map((beat) => {
+  return beatsWithVisuals.map((beat) => {
     switch (beat.type) {
       case "setup":
         return {
@@ -75,61 +89,62 @@ function generateBeatNarratives(
           narrative: `Welcome to ${inputs.place}! Our hero ${inputs.sidekick} was feeling ${inputs.mood}. They ${inputs.verbs[0] || "walked"} toward a mysterious discovery.`,
           modelsUsed: [],
           characterVoices: [],
-          visualPrompt: `A vibrant, kid-friendly illustration of a ${inputs.mood} ${inputs.sidekick} in ${inputs.place}. Style: colorful digital storybook art, cheerful, wide shot.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A vibrant, kid-friendly illustration of a ${inputs.mood} ${inputs.sidekick} in ${inputs.place}. Style: colorful digital storybook art, cheerful, wide shot.`,
         };
-
       case "groupsIntro":
         return {
           beatType: "groupsIntro" as const,
           narrative: `${inputs.sidekick} found ${inputs.nouns[0] || "items"} arranged in equal groups! "Look!" they exclaimed. "There are groups, and each group has the same number!"`,
           modelsUsed: [],
           characterVoices: getCharacterVoices(context, []),
-          visualPrompt: `A fun illustration of equal groups of ${inputs.nouns[0] || "items"} scattered around ${inputs.place}. The ${inputs.sidekick} is pointing at them excitedly. Style: colorful children's book.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A fun illustration of equal groups of ${inputs.nouns[0] || "items"} scattered around ${inputs.place}. The ${inputs.sidekick} is pointing at them excitedly. Style: colorful children's book.`,
         };
-
       case "representation":
         return {
           beatType: "representation" as const,
           narrative: `${inputs.sidekick} drew a picture to organize everything. They made an array — rows and columns — to see all the ${inputs.nouns[0] || "items"} at once. "When I arrange them in equal groups, I can see the pattern!"`,
           modelsUsed: context.skeleton.requiredModels,
           characterVoices: [],
-          visualPrompt: `A neatly drawn grid or array of ${inputs.nouns[0] || "items"} showing clear rows and columns, as if drawn by ${inputs.sidekick} in ${inputs.place}. Style: educational, clear and engaging.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A neatly drawn grid or array of ${inputs.nouns[0] || "items"} showing clear rows and columns, as if drawn by ${inputs.sidekick} in ${inputs.place}. Style: educational, clear and engaging.`,
         };
-
       case "reasoning":
         return {
           beatType: "reasoning" as const,
           narrative: `"I get it!" said ${inputs.sidekick}. "${concept.whyItWorks}" The ${inputs.nouns[0] || "items"} showed exactly why multiplication is just a fast way to count equal groups.`,
           modelsUsed: concept.models.map((m) => m.id),
           characterVoices: getCharacterVoices(context, concept.models.map((m) => m.id)),
-          visualPrompt: `The ${inputs.sidekick} having a 'lightbulb' moment in ${inputs.place}, surrounded by organized ${inputs.nouns[0] || "items"}. Style: bright, optimistic, magical math discovery.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `The ${inputs.sidekick} having a 'lightbulb' moment in ${inputs.place}, surrounded by organized ${inputs.nouns[0] || "items"}. Style: bright, optimistic, magical math discovery.`,
         };
-
       case "generalize":
         return {
           beatType: "generalize" as const,
           narrative: `${inputs.sidekick} wondered: "Does this work for ANY equal groups?" They tried it with different numbers and — yes! The same strategy worked every time.`,
           modelsUsed: [],
           characterVoices: [],
-          visualPrompt: `Various sizes of groups of ${inputs.nouns[0] || "items"} floating mathematically in ${inputs.place}, with glowing numbers. Style: inspiring learning moment, abstract background.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `Various sizes of groups of ${inputs.nouns[0] || "items"} floating mathematically in ${inputs.place}, with glowing numbers. Style: inspiring learning moment, abstract background.`,
         };
-
       case "reflection":
         return {
           beatType: "reflection" as const,
           narrative: `Feeling ${inputs.mood}, ${inputs.sidekick} reflected: "Multiplication is a fast way to count equal groups, and I can use arrays and diagrams to see why it works!"`,
           modelsUsed: [],
           characterVoices: [],
-          visualPrompt: `A happy, confident ${inputs.sidekick} waving goodbye in ${inputs.place}, having solved the mathematical mystery. Style: joyful, colorful storybook ending.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `A happy, confident ${inputs.sidekick} waving goodbye in ${inputs.place}, having solved the mathematical mystery. Style: joyful, colorful storybook ending.`,
         };
-
       default:
         return {
           beatType: beat.type,
           narrative: beat.description,
           modelsUsed: [],
           characterVoices: [],
-          visualPrompt: `An atmospheric view of ${inputs.place} with ${inputs.sidekick}. Style: conceptual, children's storybook.`,
+          visualSpec: beat.visualSpec,
+          visualPrompt: beat.visualSpec?.imagenPrompt ?? `An atmospheric view of ${inputs.place} with ${inputs.sidekick}. Style: conceptual, children's storybook.`,
         };
     }
   });
@@ -148,7 +163,7 @@ function getCharacterVoices(
 }
 
 /**
- * selfCheckStory — Core.md Section 3 Step 5
+ * selfCheckStory — Core.md Section 3 Step 6
  *
  * "Explain the math idea this story teaches."
  * This explanation must match Concept's models[] and strategies[], or regenerate.
@@ -183,12 +198,19 @@ export function selfCheckStory(
     mismatches.push("Missing or empty reasoning beat — strategies not demonstrated");
   }
 
+  // Check: visual specs are attached to beat narratives
+  const beatsWithVisuals = story.beatNarratives.filter((b) => b.visualSpec !== undefined);
+  if (beatsWithVisuals.length === 0) {
+    mismatches.push("No beat narratives have visualSpec attached — beatVisualMapper integration may be missing");
+  }
+
   // Build the math explanation
   const mathExplanation = [
     `This story teaches: ${concept.whyItWorks}`,
     `Models used: ${[...allModelsUsed].join(", ") || "none"}`,
     `Strategies available: ${concept.strategies.map((s) => s.name).join(", ")}`,
     `The story follows the ${story.beatNarratives.length}-beat structure, progressing from setup through reasoning to reflection.`,
+    `Visual specs attached: ${beatsWithVisuals.length}/${story.beatNarratives.length} beats.`,
   ].join(" ");
 
   return {
