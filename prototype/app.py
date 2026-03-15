@@ -277,7 +277,7 @@ def next_beat():
                 session.modified = True
                 return jsonify(
                     _build_beat_response(
-                        "5b",
+                        5,
                         story_text,
                         image_prompt,
                         "button",
@@ -480,4 +480,5 @@ def api_evaluate():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug, host="0.0.0.0", port=5000)

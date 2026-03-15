@@ -41,11 +41,12 @@ def generate_beat(prompt: str, history: list) -> str:
 
 def extract_image_prompt(text: str) -> tuple[str, str]:
     """Extract IMAGE_PROMPT from story text. Returns (story_text, image_prompt)."""
-    pattern = r"IMAGE_PROMPT:\s*(.+?)(?:\n|$)"
+    pattern = r"\n?IMAGE_PROMPT:\s*(.+?)(?:\n|$)"
     match = re.search(pattern, text, re.IGNORECASE)
     if match:
         image_prompt = match.group(1).strip()
-        story_text = text[: match.start()].strip()
+        # Remove just the IMAGE_PROMPT line, preserve any content before/after
+        story_text = (text[: match.start()] + text[match.end() :]).strip()
         return story_text, image_prompt
     return text.strip(), ""
 

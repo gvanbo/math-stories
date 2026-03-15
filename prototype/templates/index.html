@@ -876,8 +876,7 @@ async function loadBeat(beatNumber, extra = {}) {
 
 function renderBeat(data) {
   // Update beat label
-  const beatNum = typeof data.beat_number === 'number' ? data.beat_number : 
-    (data.beat_number === '5b' ? 5 : parseInt(data.beat_number));
+  const beatNum = Math.min(parseInt(data.beat_number) || 1, 7);
   const displayNum = Math.min(beatNum, 7);
   document.getElementById('beat-label').textContent = `Beat ${displayNum} of 7`;
 
@@ -965,7 +964,6 @@ function renderButtonInteraction(area, promptText, beatNumber, isFinal) {
 }
 
 function getNextBeat(current) {
-  if (current === '5b' || current === 'beat5b') return 6;
   const n = parseInt(current);
   if (n < 7) return n + 1;
   return null;
