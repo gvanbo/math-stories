@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧮 Math Stories — MathBot</title>
+  <style>
+    /* ------------------------------------------------------------------ */
+    /* Reset & variables                                                    */
+    /* ------------------------------------------------------------------ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:  #7c3aed;
+      --teal:    #0d9488;
+      --pink:    #db2777;
+      --yellow:  #f59e0b;
+      --bg:      #f5f3ff;
+      --card-bg: #ffffff;
+      --text:    #1e1b4b;
+      --muted:   #6b7280;
+      --radius:  1rem;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Header                                                               */
+    /* ------------------------------------------------------------------ */
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1.5rem;
+    }
+    header h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    header p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      margin-top: .5rem;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Form card                                                            */
+    /* ------------------------------------------------------------------ */
+    .form-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(124,58,237,.12);
+      max-width: 640px;
+      margin: 0 auto 2rem;
+      padding: 2rem;
+    }
+    .form-card h2 {
+      font-size: 1.4rem;
+      color: var(--purple);
+      margin-bottom: 1.25rem;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 1rem;
+    }
+    @media (min-width: 520px) {
+      .field-group { grid-template-columns: 1fr 1fr; }
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    label span { font-size: .85rem; color: var(--muted); font-weight: 400; }
+
+    input, select {
+      width: 100%;
+      padding: .65rem .9rem;
+      border: 2px solid #e5e7eb;
+      border-radius: .6rem;
+      font-size: 1rem;
+      transition: border-color .2s;
+      background: #fafafa;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--purple);
+      background: #fff;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Generate button                                                      */
+    /* ------------------------------------------------------------------ */
+    #generate-btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    #generate-btn:hover { opacity: .9; transform: translateY(-1px); }
+    #generate-btn:active { transform: translateY(0); }
+    #generate-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* ------------------------------------------------------------------ */
+    /* Spinner / loading                                                    */
+    /* ------------------------------------------------------------------ */
+    #loader {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 1rem;
+    }
+    #loader.visible { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 56px; height: 56px;
+      border: 6px solid #e5e7eb;
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+      margin-bottom: 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loader p {
+      font-size: 1.1rem;
+      color: var(--purple);
+      font-weight: 600;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Story output                                                         */
+    /* ------------------------------------------------------------------ */
+    #story-output { max-width: 800px; margin: 0 auto; }
+
+    .beat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 3px 16px rgba(0,0,0,.08);
+      margin-bottom: 1.75rem;
+      overflow: hidden;
+      animation: fadeUp .45s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .beat-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1rem 1.25rem .75rem;
+    }
+    .beat-badge {
+      padding: .3rem .8rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #fff;
+    }
+    .badge-setup        { background: var(--purple); }
+    .badge-discovery    { background: var(--teal); }
+    .badge-representation { background: #0284c7; }
+    .badge-reasoning    { background: var(--yellow); color: #1e1b4b; }
+    .badge-generalize   { background: var(--pink); }
+    .badge-reflection   { background: #16a34a; }
+
+    .beat-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0 1.25rem 1.25rem;
+    }
+    @media (min-width: 620px) {
+      .beat-body { flex-direction: row; align-items: flex-start; }
+      .beat-illustration { flex: 0 0 200px; }
+      .beat-text-area { flex: 1; }
+    }
+
+    .beat-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    /* Illustration */
+    .beat-illustration {
+      border-radius: .75rem;
+      overflow: hidden;
+      background: #f3f0ff;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .beat-illustration img,
+    .beat-illustration svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .img-loading {
+      font-size: 2rem;
+      animation: pulse 1.2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+
+    /* Audio button */
+    .narrate-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .75rem;
+      padding: .5rem 1rem;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--teal);
+      background: #f0fdf4;
+      border: 2px solid var(--teal);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .narrate-btn:hover { background: var(--teal); color: #fff; }
+    .narrate-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* ------------------------------------------------------------------ */
+    /* Error banner                                                         */
+    /* ------------------------------------------------------------------ */
+    #error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      color: #991b1b;
+      max-width: 640px;
+      margin: 0 auto 1.5rem;
+    }
+    #error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>🧮 Math Stories</h1>
+  <p>Let MathBot turn any math topic into an epic adventure! 🚀</p>
+</header>
+
+<!-- Form card -->
+<section class="form-card">
+  <h2>✨ Build Your Story</h2>
+  <form id="story-form">
+    <div class="field-group">
+
+      <label>
+        📚 Math Topic
+        <span>What are we learning today?</span>
+        <select name="topic" id="topic">
+          <option value="multiplication">Multiplication</option>
+          <option value="division">Division</option>
+          <option value="fractions">Fractions</option>
+          <option value="place value">Place Value</option>
+          <option value="patterns">Patterns</option>
+        </select>
+      </label>
+
+      <label>
+        🗺️ Place
+        <span>Where does the story happen?</span>
+        <input type="text" name="place" id="place"
+               placeholder="e.g. a candy volcano" maxlength="60" />
+      </label>
+
+      <label>
+        🤝 Sidekick
+        <span>Who helps you on the quest?</span>
+        <input type="text" name="sidekick" id="sidekick"
+               placeholder="e.g. a talking pizza" maxlength="60" />
+      </label>
+
+      <label>
+        ⭐ Favourite Item
+        <span>What is your favorite item?</span>
+        <input type="text" name="item" id="item"
+               placeholder="e.g. glowing gems" maxlength="60" />
+      </label>
+
+      <label style="grid-column: span 2;">
+        😄 Story Mood
+        <span>How should the story feel?</span>
+        <select name="mood" id="mood">
+          <option value="silly">😂 Silly</option>
+          <option value="brave">🦁 Brave</option>
+          <option value="curious">🔍 Curious</option>
+          <option value="sleepy">😴 Sleepy</option>
+          <option value="excited">🎉 Excited</option>
+        </select>
+      </label>
+
+    </div><!-- /.field-group -->
+
+    <button type="submit" id="generate-btn">🌟 Generate My Math Story!</button>
+  </form>
+</section>
+
+<!-- Error banner -->
+<div id="error-banner" role="alert"></div>
+
+<!-- Loader -->
+<div id="loader" aria-live="polite">
+  <div class="spinner"></div>
+  <p id="loader-msg">MathBot is cooking up your story… 🍳</p>
+</div>
+
+<!-- Story output -->
+<section id="story-output" aria-live="polite"></section>
+
+<script>
+  /* ------------------------------------------------------------------ */
+  /* Fun loading messages                                                 */
+  /* ------------------------------------------------------------------ */
+  const LOADING_MSGS = [
+    'MathBot is cooking up your story… 🍳',
+    'Sharpening the story pencils… ✏️',
+    'Waking up the math wizards… 🧙',
+    'Counting imaginary clouds… ☁️',
+    'Mixing numbers with adventure… 🧪',
+    'Consulting the Grand Library of Equations… 📚',
+    'Teaching robots to rhyme… 🤖',
+    'Almost there — adding extra sprinkles… 🍩',
+  ];
+
+  let loaderTimer;
+  function startLoader() {
+    let i = 0;
+    const msgEl = document.getElementById('loader-msg');
+    msgEl.textContent = LOADING_MSGS[0];
+    loaderTimer = setInterval(() => {
+      i = (i + 1) % LOADING_MSGS.length;
+      msgEl.textContent = LOADING_MSGS[i];
+    }, 2500);
+  }
+  function stopLoader() { clearInterval(loaderTimer); }
+
+  /* ------------------------------------------------------------------ */
+  /* Beat label map                                                       */
+  /* ------------------------------------------------------------------ */
+  const BEAT_LABELS = {
+    setup:           '🏁 Setup',
+    discovery:       '🔎 Discovery',
+    representation:  '🔢 Representation',
+    reasoning:       '🧠 Reasoning',
+    generalize:      '🌍 Generalize',
+    reflection:      '🎉 Reflection',
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Image loading                                                        */
+  /* ------------------------------------------------------------------ */
+  async function loadImage(prompt, container) {
+    try {
+      const res = await fetch('/api/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) throw new Error('image error');
+      const data = await res.json();
+      const src = `data:${data.mimeType};base64,${data.image}`;
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = prompt.slice(0, 80);
+      container.innerHTML = '';
+      container.appendChild(img);
+    } catch {
+      container.innerHTML = '<span style="font-size:2rem;padding:1rem">🎨</span>';
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Audio narration                                                      */
+  /* ------------------------------------------------------------------ */
+  function attachNarrateBtn(btn, text) {
+    let audioEl = null;
+    btn.addEventListener('click', async () => {
+      if (audioEl && !audioEl.paused) {
+        audioEl.pause();
+        btn.textContent = '🔊 Listen';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '⏳ Loading…';
+      try {
+        const res = await fetch('/api/narrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error('tts error');
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        const src = `data:${data.mimeType};base64,${data.audio}`;
+        audioEl = new Audio(src);
+        audioEl.play();
+        btn.textContent = '⏸️ Pause';
+        audioEl.onended = () => { btn.textContent = '🔊 Listen'; };
+      } catch {
+        btn.textContent = '🔇 Audio N/A';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Render a single beat card                                            */
+  /* ------------------------------------------------------------------ */
+  function renderBeat(beat, index) {
+    const card = document.createElement('div');
+    card.className = 'beat-card';
+    card.style.animationDelay = `${index * 0.12}s`;
+
+    const label = BEAT_LABELS[beat.type] || beat.type;
+    const badgeClass = `badge-${beat.type}`;
+
+    card.innerHTML = `
+      <div class="beat-header">
+        <span class="beat-badge ${badgeClass}">${label}</span>
+      </div>
+      <div class="beat-body">
+        <div class="beat-illustration">
+          <span class="img-loading">🎨</span>
+        </div>
+        <div class="beat-text-area">
+          <p class="beat-text">${escapeHtml(beat.text)}</p>
+          <button class="narrate-btn" type="button">🔊 Listen</button>
+        </div>
+      </div>`;
+
+    const imgContainer = card.querySelector('.beat-illustration');
+    const narrateBtn = card.querySelector('.narrate-btn');
+
+    // Load image asynchronously
+    loadImage(beat.imagePrompt, imgContainer);
+
+    // Attach narration
+    attachNarrateBtn(narrateBtn, beat.text);
+
+    return card;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Escape HTML                                                          */
+  /* ------------------------------------------------------------------ */
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Form submit                                                          */
+  /* ------------------------------------------------------------------ */
+  document.getElementById('story-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn     = document.getElementById('generate-btn');
+    const loader  = document.getElementById('loader');
+    const output  = document.getElementById('story-output');
+    const errBanner = document.getElementById('error-banner');
+
+    // Reset UI
+    output.innerHTML = '';
+    errBanner.classList.remove('visible');
+    btn.disabled = true;
+    loader.classList.add('visible');
+    startLoader();
+
+    const payload = {
+      topic:   document.getElementById('topic').value,
+      place:   document.getElementById('place').value  || 'a magical forest',
+      sidekick:document.getElementById('sidekick').value || 'a friendly robot',
+      item:    document.getElementById('item').value   || 'glowing gems',
+      mood:    document.getElementById('mood').value,
+    };
+
+    try {
+      const res = await fetch('/api/story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+      if (!data.beats || !data.beats.length) throw new Error('No story beats returned.');
+
+      data.beats.forEach((beat, i) => {
+        output.appendChild(renderBeat(beat, i));
+      });
+
+      output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      errBanner.textContent = `😢 Oops! ${err.message || 'Something went wrong. Please try again.'}`;
+      errBanner.classList.add('visible');
+    } finally {
+      stopLoader();
+      loader.classList.remove('visible');
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
