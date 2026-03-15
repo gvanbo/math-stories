@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Once Upon a Number</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1a0a2e;
+      --card: #2d1457;
+      --card2: #3a1a6e;
+      --teal: #00d4aa;
+      --pink: #ff6b9d;
+      --yellow: #ffd700;
+      --purple-light: #b084f5;
+      --text: #f0e6ff;
+      --muted: #a090c0;
+      --radius: 18px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1, h2, h3, .fredoka { font-family: 'Fredoka', sans-serif; }
+
+    #app {
+      width: 100%;
+      max-width: 800px;
+      padding: 20px 16px 60px;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 28px;
+    }
+    .app-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.6rem;
+      color: var(--teal);
+      letter-spacing: 0.5px;
+    }
+    .app-title span { color: var(--pink); }
+    .topbar-nav button {
+      background: none;
+      border: 1px solid var(--muted);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .topbar-nav button:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── Screens ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── WELCOME ── */
+    #welcome {
+      text-align: center;
+      padding: 48px 0;
+    }
+    .welcome-icon { font-size: 80px; margin-bottom: 24px; }
+    #welcome h1 {
+      font-size: 3rem;
+      color: var(--teal);
+      margin-bottom: 12px;
+    }
+    #welcome h1 span { color: var(--pink); }
+    #welcome .tagline {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+    .btn-hero {
+      background: linear-gradient(135deg, var(--teal), #00a88b);
+      color: #fff;
+      border: none;
+      padding: 18px 48px;
+      border-radius: 50px;
+      font-size: 1.25rem;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 24px rgba(0, 212, 170, 0.35);
+    }
+    .btn-hero:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0, 212, 170, 0.45); }
+    .welcome-features {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 52px;
+      flex-wrap: wrap;
+    }
+    .feature-chip {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      color: var(--purple-light);
+    }
+
+    /* ── PERSONALIZE ── */
+    #personalize h2 {
+      font-size: 2rem;
+      color: var(--teal);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    #personalize .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .form-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+    }
+    .form-row {
+      margin-bottom: 22px;
+    }
+    .form-row label {
+      display: block;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--purple-light);
+    }
+    .form-row input, .form-row select {
+      width: 100%;
+      background: var(--bg);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--teal); }
+    .form-row select option { background: var(--bg); }
+    .form-row .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .btn-submit {
+      width: 100%;
+      margin-top: 8px;
+      background: linear-gradient(135deg, var(--pink), #e0457a);
+      color: #fff;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(255, 107, 157, 0.35);
+    }
+    .btn-submit:hover { transform: translateY(-2px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── CONCEPT SELECT ── */
+    #concept-select h2 {
+      font-size: 2rem;
+      color: var(--teal);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    #concept-select .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .concept-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .concept-grid { grid-template-columns: 1fr; } }
+    .concept-card {
+      background: var(--card);
+      border: 2px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .concept-card:hover:not(.locked) { border-color: var(--teal); transform: translateY(-2px); }
+    .concept-card.locked { opacity: 0.45; cursor: not-allowed; }
+    .concept-card.completed { border-color: var(--yellow); }
+    .concept-card.unlocked { border-color: var(--teal); }
+    .concept-card .strand-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(0, 212, 170, 0.15);
+      color: var(--teal);
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .concept-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .concept-card .status-icon {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 1.2rem;
+    }
+
+    /* ── STORY ── */
+    #story .beat-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .beat-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .beat-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--card2);
+      transition: background 0.3s;
+    }
+    .beat-dot.done { background: var(--teal); }
+    .beat-dot.active { background: var(--pink); }
+    .beat-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .concept-label {
+      font-size: 0.85rem;
+      color: var(--purple-light);
+      background: var(--card);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-left: auto;
+    }
+
+    .illustration-card {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
+      background: var(--card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .illustration-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .story-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      line-height: 1.8;
+      font-size: 1.05rem;
+    }
+    .story-card p {
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .story-card p.visible { opacity: 1; transform: none; }
+
+    .audio-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .audio-bar button {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .audio-bar button:hover { border-color: var(--teal); color: var(--teal); }
+    .audio-status { font-size: 0.8rem; color: var(--muted); }
+
+    .interaction-area {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .interaction-area .prompt-text {
+      font-size: 1rem;
+      color: var(--purple-light);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    .interaction-area input[type="text"],
+    .interaction-area input[type="number"],
+    .interaction-area textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .interaction-area input:focus,
+    .interaction-area textarea:focus { border-color: var(--teal); }
+    .interaction-area textarea { min-height: 100px; }
+
+    .btn-row { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), #00a88b);
+      color: #fff;
+      border: none;
+      padding: 13px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 13px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: 'Fredoka', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--pink); color: var(--pink); }
+
+    .challenge-box {
+      background: rgba(255, 107, 157, 0.08);
+      border: 2px solid var(--pink);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .challenge-box h3 {
+      font-size: 1.3rem;
+      color: var(--pink);
+      margin-bottom: 12px;
+    }
+    .challenge-box .question {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .challenge-box input[type="number"] {
+      font-size: 1.4rem;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 3px solid var(--pink);
+      color: var(--text);
+      width: 180px;
+      outline: none;
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    /* ── LOADING ── */
+    .loading-overlay {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(0, 212, 170, 0.2);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg {
+      font-size: 1.1rem;
+      color: var(--purple-light);
+      font-family: 'Fredoka', sans-serif;
+    }
+    .loading-submsg {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* ── BADGE ── */
+    #badge-screen {
+      text-align: center;
+      padding: 40px 0;
+    }
+    .badge-animation {
+      font-size: 90px;
+      animation: badgePop 0.6s cubic-bezier(0.3, 0.8, 0.4, 1.2) forwards;
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    @keyframes badgePop {
+      to { opacity: 1; transform: scale(1); }
+    }
+    .badge-tier-gold { color: var(--yellow); }
+    .badge-tier-silver { color: #c0c8d8; }
+    .badge-tier-bronze { color: #c8864a; }
+    #badge-screen h2 {
+      font-size: 2.2rem;
+      margin: 24px 0 12px;
+    }
+    .badge-feedback {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      margin: 20px 0;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--purple-light);
+      text-align: left;
+    }
+    .badge-missed {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .badge-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    /* ── PROGRESS MAP ── */
+    #progress-screen h2 {
+      font-size: 2rem;
+      color: var(--teal);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .progress-list {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .progress-item {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .progress-item .pi-icon { font-size: 1.5rem; }
+    .progress-item .pi-title { font-weight: 600; }
+    .progress-item .pi-strand { font-size: 0.8rem; color: var(--muted); }
+    .progress-item .pi-badge {
+      margin-left: auto;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--yellow);
+    }
+
+    /* ── Error toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #3a1a1a;
+      border: 1px solid var(--pink);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      transition: transform 0.3s;
+      z-index: 1000;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Utility ── */
+    .text-center { text-align: center; }
+    .mt-4 { margin-top: 16px; }
+    .mt-8 { margin-top: 32px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="app-title fredoka">Once Upon a <span>Number</span></div>
+    <div class="topbar-nav">
+      <button id="btn-progress-nav" onclick="showProgress()" class="hidden">📊 My Progress</button>
+    </div>
+  </div>
+
+  <!-- WELCOME SCREEN -->
+  <div id="welcome" class="screen active">
+    <div class="welcome-icon">📖</div>
+    <h1>Once Upon a <span>Number</span></h1>
+    <p class="tagline">Step into a story where YOU are the hero — and the math is your superpower. ✨</p>
+    <button class="btn-hero" onclick="showPersonalize()">🚀 Start Your Adventure</button>
+    <div class="welcome-features">
+      <div class="feature-chip">🤖 AI-Generated Stories</div>
+      <div class="feature-chip">🎨 Beautiful Illustrations</div>
+      <div class="feature-chip">🏆 Earn Badges</div>
+      <div class="feature-chip">🎓 Grade 4 Math</div>
+    </div>
+  </div>
+
+  <!-- PERSONALIZE SCREEN -->
+  <div id="personalize" class="screen">
+    <h2>Make It YOUR Story! 🎭</h2>
+    <p class="subtitle">Fill in the blanks to create your unique adventure</p>
+    <div class="form-card">
+      <div class="form-row">
+        <label>🌍 Favourite place to have an adventure</label>
+        <input type="text" id="input-place" placeholder="e.g. a volcano, an underwater bakery, the moon" maxlength="60" />
+      </div>
+      <div class="form-row">
+        <label>🤖 Your sidekick's name</label>
+        <input type="text" id="input-sidekick-name" placeholder="e.g. Bolt, Zara, Captain Noodle" maxlength="40" />
+        <p class="hint">What kind of creature is your sidekick?</p>
+        <input type="text" id="input-sidekick-type" placeholder="e.g. robot, dragon, talking pizza" maxlength="40" style="margin-top: 8px" />
+      </div>
+      <div class="form-row">
+        <label>⭐ Your favourite item</label>
+        <input type="text" id="input-item" placeholder="e.g. tacos, soccer balls, glowing crystals" maxlength="40" />
+      </div>
+      <div class="form-row">
+        <label>😊 How are you feeling today?</label>
+        <select id="input-mood">
+          <option value="excited">🤩 Super Excited</option>
+          <option value="curious">🤔 Really Curious</option>
+          <option value="brave">😤 Extra Brave</option>
+          <option value="silly">🤪 Totally Silly</option>
+          <option value="sleepy">😴 A Little Sleepy</option>
+        </select>
+      </div>
+      <button class="btn-submit" id="btn-personalize-next" onclick="submitPersonalize()">
+        Choose Your Math Quest! →
+      </button>
+    </div>
+  </div>
+
+  <!-- CONCEPT SELECT SCREEN -->
+  <div id="concept-select" class="screen">
+    <h2>Choose Your Quest! 🗺️</h2>
+    <p class="subtitle">Pick a math concept to explore in your story</p>
+    <div class="concept-grid" id="concept-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- STORY SCREEN -->
+  <div id="story" class="screen">
+    <!-- Beat indicator -->
+    <div class="beat-indicator">
+      <div class="beat-dots" id="beat-dots">
+        <div class="beat-dot" id="dot-1"></div>
+        <div class="beat-dot" id="dot-2"></div>
+        <div class="beat-dot" id="dot-3"></div>
+        <div class="beat-dot" id="dot-4"></div>
+        <div class="beat-dot" id="dot-5"></div>
+        <div class="beat-dot" id="dot-6"></div>
+        <div class="beat-dot" id="dot-7"></div>
+      </div>
+      <div class="beat-label" id="beat-label">Beat 1 of 7</div>
+      <div class="concept-label" id="concept-label">Math Quest</div>
+    </div>
+
+    <!-- Illustration -->
+    <div class="illustration-card" id="illustration-card">
+      <img id="illustration-img" src="/static/placeholder.svg" alt="Story illustration" />
+    </div>
+
+    <!-- Story text -->
+    <div class="story-card" id="story-text"></div>
+
+    <!-- Audio bar -->
+    <div class="audio-bar" id="audio-bar">
+      <button id="btn-play" onclick="playAudio()">🔊 Listen</button>
+      <button id="btn-pause" onclick="pauseAudio()" class="hidden">⏸ Pause</button>
+      <button id="btn-replay" onclick="replayAudio()" class="hidden">🔁 Replay</button>
+      <span class="audio-status" id="audio-status"></span>
+    </div>
+
+    <!-- Interaction area -->
+    <div class="interaction-area" id="interaction-area">
+      <!-- Populated by JS based on beat type -->
+    </div>
+
+    <!-- Loading overlay (shown while waiting for AI) -->
+    <div id="loading" class="loading-overlay hidden">
+      <div class="loading-spinner"></div>
+      <div class="loading-msg" id="loading-msg">MathBot is brewing up your story... ☕</div>
+      <div class="loading-submsg">This might take a moment — great things take time!</div>
+    </div>
+  </div>
+
+  <!-- BADGE SCREEN -->
+  <div id="badge-screen" class="screen">
+    <div class="badge-animation" id="badge-icon">🏆</div>
+    <h2 id="badge-title">Achievement Unlocked!</h2>
+    <div class="badge-feedback" id="badge-feedback"></div>
+    <div class="badge-missed hidden" id="badge-missed"></div>
+    <div class="badge-actions">
+      <button class="btn-primary" onclick="showConceptSelect()">🗺️ New Adventure</button>
+      <button class="btn-secondary" onclick="showProgress()">📊 My Progress</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS SCREEN -->
+  <div id="progress-screen" class="screen">
+    <h2>My Math Journey 🗺️</h2>
+    <p class="text-center" style="color: var(--muted); margin-bottom: 8px">Your adventure so far</p>
+    <div class="progress-list" id="progress-list"></div>
+    <div class="mt-8 text-center">
+      <button class="btn-primary" onclick="showConceptSelect()">➕ Start New Quest</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<!-- Audio element -->
+<audio id="story-audio" preload="auto"></audio>
+
+<script>
+// ────────────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────────────
+const state = {
+  place: '',
+  sidekick: '',
+  item: '',
+  mood: 'excited',
+  conceptId: '',
+  conceptTitle: '',
+  currentBeat: 0,
+  challengeQuestion: '',
+  beat5Step: 'setup', // 'setup' | 'predictions'
+  completedConcepts: [],
+  badges: [],
+  audioData: null,  // current base64 audio
+};
+
+// Loading messages cycle
+const LOADING_MSGS = [
+  'MathBot is brewing up your story... ☕',
+  'Imagen is painting your adventure... 🎨',
+  'Your sidekick is getting ready... 🤖',
+  'The math magic is happening... ✨',
+  'Weaving math into the tale... 📚',
+  'Almost there — the adventure awaits! 🚀',
+];
+let loadingMsgInterval = null;
+
+// ────────────────────────────────────────────────────────────
+// SCREEN NAVIGATION
+// ────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showPersonalize() { showScreen('personalize'); }
+function showConceptSelect() {
+  loadCurriculum();
+  showScreen('concept-select');
+}
+function showProgress() {
+  loadProgress();
+  showScreen('progress-screen');
+}
+
+// ────────────────────────────────────────────────────────────
+// PERSONALIZE FORM
+// ────────────────────────────────────────────────────────────
+async function submitPersonalize() {
+  const place = document.getElementById('input-place').value.trim();
+  const sidekickName = document.getElementById('input-sidekick-name').value.trim();
+  const sidekickType = document.getElementById('input-sidekick-type').value.trim();
+  const item = document.getElementById('input-item').value.trim();
+  const mood = document.getElementById('input-mood').value;
+
+  if (!place || !sidekickName || !item) {
+    showToast('Fill in your place, sidekick name, and favourite item to continue! 🌟');
+    return;
+  }
+
+  state.place = place;
+  state.sidekick = `${sidekickName}${sidekickType ? ' the ' + sidekickType : ''}`;
+  state.item = item;
+  state.mood = mood;
+
+  showConceptSelect();
+}
+
+// ────────────────────────────────────────────────────────────
+// CURRICULUM / CONCEPT SELECT
+// ────────────────────────────────────────────────────────────
+async function loadCurriculum() {
+  const grid = document.getElementById('concept-grid');
+  grid.innerHTML = '<p style="color:var(--muted);text-align:center">Loading quests...</p>';
+  try {
+    const res = await fetch('/api/curriculum');
+    const concepts = await res.json();
+    renderConceptGrid(concepts);
+  } catch (e) {
+    grid.innerHTML = '<p style="color:var(--pink)">Failed to load quests. Refresh and try again.</p>';
+  }
+}
+
+function renderConceptGrid(concepts) {
+  const grid = document.getElementById('concept-grid');
+  grid.innerHTML = '';
+  // Load local progress
+  const localProgress = JSON.parse(localStorage.getItem('ouam_progress') || '{}');
+  const localCompleted = localProgress.completed || [];
+
+  concepts.forEach(c => {
+    const isCompleted = c.completed || localCompleted.includes(c.id);
+    const isUnlocked = c.unlocked || c.prerequisite_ids.length === 0 ||
+      c.prerequisite_ids.every(pid => localCompleted.includes(pid));
+    const isLocked = !isUnlocked && !isCompleted;
+
+    const card = document.createElement('div');
+    card.className = `concept-card ${isLocked ? 'locked' : isCompleted ? 'completed' : 'unlocked'}`;
+    card.innerHTML = `
+      <div class="strand-badge">${c.strand}</div>
+      <div class="status-icon">${isCompleted ? '✅' : isLocked ? '🔒' : '🎯'}</div>
+      <h3>${c.title}</h3>
+      ${isCompleted ? '<div style="font-size:0.8rem;color:var(--yellow);margin-top:4px">Completed!</div>' : ''}
+      ${isLocked ? '<div style="font-size:0.8rem;color:var(--muted);margin-top:4px">Complete prerequisites first</div>' : ''}
+    `;
+    if (!isLocked) {
+      card.addEventListener('click', () => startLesson(c.id, c.title));
+    }
+    grid.appendChild(card);
+  });
+}
+
+// ────────────────────────────────────────────────────────────
+// START LESSON
+// ────────────────────────────────────────────────────────────
+async function startLesson(conceptId, conceptTitle) {
+  state.conceptId = conceptId;
+  state.conceptTitle = conceptTitle;
+  state.currentBeat = 1;
+  state.beat5Step = 'setup';
+  state.challengeQuestion = '';
+
+  showScreen('story');
+  document.getElementById('btn-progress-nav').classList.remove('hidden');
+  document.getElementById('concept-label').textContent = conceptTitle;
+
+  showLoading(true);
+  try {
+    await fetch('/api/session/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        place: state.place,
+        sidekick: state.sidekick,
+        item: state.item,
+        mood: state.mood,
+        concept_id: conceptId,
+      }),
+    });
+    await loadBeat(1);
+  } catch (e) {
+    showLoading(false);
+    showToast('Failed to start lesson. Please try again. 😢');
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// BEAT LOADING
+// ────────────────────────────────────────────────────────────
+async function loadBeat(beatNumber, extra = {}) {
+  showLoading(true);
+  updateBeatDots(beatNumber);
+
+  try {
+    const body = { beat_number: beatNumber, ...extra };
+    const res = await fetch('/api/beat/next', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error) {
+      showLoading(false);
+      showToast(data.error);
+      return;
+    }
+    state.currentBeat = beatNumber;
+    showLoading(false);
+    renderBeat(data);
+  } catch (e) {
+    showLoading(false);
+    showToast('Something went wrong. The math magic needs a moment — try again! ✨');
+  }
+}
+
+function renderBeat(data) {
+  // Update beat label
+  const beatNum = Math.min(parseInt(data.beat_number) || 1, 7);
+  const displayNum = Math.min(beatNum, 7);
+  document.getElementById('beat-label').textContent = `Beat ${displayNum} of 7`;
+
+  // Illustration
+  if (data.image_base64) {
+    document.getElementById('illustration-img').src = `data:image/png;base64,${data.image_base64}`;
+  } else {
+    document.getElementById('illustration-img').src = '/static/placeholder.svg';
+  }
+
+  // Story text with animation
+  renderStoryText(data.story_text);
+
+  // Audio
+  state.audioData = data.audio_base64;
+  setupAudio(data.audio_base64);
+
+  // Interaction
+  renderInteraction(data);
+
+  // Store challenge question
+  if (data.challenge_question) {
+    state.challengeQuestion = data.challenge_question;
+  }
+}
+
+function renderStoryText(text) {
+  const card = document.getElementById('story-text');
+  if (!text) { card.innerHTML = ''; return; }
+
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+  card.innerHTML = '';
+  paragraphs.forEach((p, i) => {
+    const el = document.createElement('p');
+    el.textContent = p.trim();
+    card.appendChild(el);
+    // Stagger animation
+    setTimeout(() => el.classList.add('visible'), i * 150 + 100);
+  });
+}
+
+// ────────────────────────────────────────────────────────────
+// INTERACTION RENDERING
+// ────────────────────────────────────────────────────────────
+function renderInteraction(data) {
+  const area = document.getElementById('interaction-area');
+  area.innerHTML = '';
+
+  const prompt = document.createElement('div');
+  prompt.className = 'prompt-text';
+  prompt.textContent = data.interaction_prompt || '';
+  area.appendChild(prompt);
+
+  switch (data.interaction_type) {
+    case 'button':
+      renderButtonInteraction(area, data.interaction_prompt, data.beat_number, data.is_final_beat);
+      break;
+    case 'text_input':
+      renderTextInteraction(area, data.beat_number, data.is_final_beat);
+      break;
+    case 'number_input':
+      renderNumberInteraction(area, data);
+      break;
+    case 'confused_or_got_it':
+      renderConfusedOrGotIt(area, data.beat_number);
+      break;
+    case 'two_predictions':
+      renderTwoPredictions(area);
+      break;
+    default:
+      renderButtonInteraction(area, data.interaction_prompt, data.beat_number, data.is_final_beat);
+  }
+}
+
+function renderButtonInteraction(area, promptText, beatNumber, isFinal) {
+  area.innerHTML = ''; // clear previous prompt
+  const btn = document.createElement('button');
+  btn.className = 'btn-primary';
+  btn.textContent = promptText || 'Continue →';
+  btn.onclick = () => {
+    const nextBeat = getNextBeat(beatNumber);
+    if (nextBeat) loadBeat(nextBeat);
+  };
+  area.appendChild(btn);
+}
+
+function getNextBeat(current) {
+  const n = parseInt(current);
+  if (n < 7) return n + 1;
+  return null;
+}
+
+function renderTextInteraction(area, beatNumber, isFinal) {
+  area.innerHTML = '';
+  const promptEl = document.createElement('div');
+  promptEl.className = 'prompt-text';
+  promptEl.id = 'text-prompt-label';
+  area.appendChild(promptEl);
+
+  const ta = document.createElement('textarea');
+  ta.id = 'text-response';
+  ta.placeholder = 'Type your answer here...';
+  ta.rows = 3;
+  area.appendChild(ta);
+
+  const emptyMsg = document.createElement('div');
+  emptyMsg.style.cssText = 'font-size:0.85rem;color:var(--pink);margin-top:6px;display:none';
+  emptyMsg.id = 'empty-msg';
+  emptyMsg.textContent = 'Tell me what you think — even a guess is great! 🌟';
+  area.appendChild(emptyMsg);
+
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+  const btn = document.createElement('button');
+  btn.className = 'btn-primary';
+  btn.textContent = isFinal ? 'Submit My Explanation! 🚀' : 'Submit My Idea! →';
+  btn.onclick = () => {
+    const val = ta.value.trim();
+    if (!val) {
+      document.getElementById('empty-msg').style.display = 'block';
+      return;
+    }
+    document.getElementById('empty-msg').style.display = 'none';
+    if (isFinal) {
+      submitFinalExplanation(val);
+    } else {
+      loadBeat(beatNumber + 1, { student_response: val });
+    }
+  };
+  row.appendChild(btn);
+  area.appendChild(row);
+}
+
+function renderConfusedOrGotIt(area, beatNumber) {
+  area.innerHTML = '';
+  const p = document.createElement('p');
+  p.className = 'prompt-text';
+  p.textContent = 'Did that make sense?';
+  area.appendChild(p);
+
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+
+  const btnGot = document.createElement('button');
+  btnGot.className = 'btn-primary';
+  btnGot.textContent = '✅ I think I get it!';
+  btnGot.onclick = () => loadBeat(5);
+
+  const btnConfused = document.createElement('button');
+  btnConfused.className = 'btn-secondary';
+  btnConfused.textContent = '🤔 Wait, I\'m confused...';
+  btnConfused.onclick = () => loadBeat(4, { confused: true });
+
+  row.appendChild(btnGot);
+  row.appendChild(btnConfused);
+  area.appendChild(row);
+}
+
+function renderTwoPredictions(area) {
+  area.innerHTML = '';
+  const p1label = document.createElement('div');
+  p1label.className = 'prompt-text';
+  p1label.textContent = '🔮 Prediction 1:';
+  area.appendChild(p1label);
+
+  const p1 = document.createElement('input');
+  p1.type = 'text';
+  p1.id = 'prediction-1';
+  p1.placeholder = 'What do you think the answer will be?';
+  area.appendChild(p1);
+
+  const p2label = document.createElement('div');
+  p2label.className = 'prompt-text';
+  p2label.style.marginTop = '14px';
+  p2label.textContent = '🔮 Prediction 2:';
+  area.appendChild(p2label);
+
+  const p2 = document.createElement('input');
+  p2.type = 'text';
+  p2.id = 'prediction-2';
+  p2.placeholder = 'What do you think about the second one?';
+  area.appendChild(p2);
+
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+  const btn = document.createElement('button');
+  btn.className = 'btn-primary';
+  btn.textContent = 'Lock in my predictions! 🎯';
+  btn.onclick = () => {
+    const p1v = document.getElementById('prediction-1').value.trim();
+    const p2v = document.getElementById('prediction-2').value.trim();
+    if (!p1v || !p2v) {
+      showToast('Enter both predictions before continuing! 🌟');
+      return;
+    }
+    // Continue beat 5 with predictions
+    submitBeat5Predictions(p1v, p2v);
+  };
+  row.appendChild(btn);
+  area.appendChild(row);
+}
+
+async function submitBeat5Predictions(p1, p2) {
+  showLoading(true);
+  updateBeatDots(5);
+  try {
+    const res = await fetch('/api/beat/next', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        beat_number: 5,
+        predictions_submitted: true,
+        prediction1: p1,
+        prediction2: p2,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error); showLoading(false); return; }
+    showLoading(false);
+    renderBeat(data);
+  } catch (e) {
+    showLoading(false);
+    showToast('Something went wrong. Try again! ✨');
+  }
+}
+
+function renderNumberInteraction(area, data) {
+  area.innerHTML = '';
+
+  // Challenge box
+  const box = document.createElement('div');
+  box.className = 'challenge-box';
+  box.innerHTML = `
+    <h3>🎯 Final Challenge!</h3>
+    <div class="question">${data.challenge_question || 'Solve the challenge!'}</div>
+  `;
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.id = 'challenge-answer';
+  input.placeholder = '?';
+  box.appendChild(input);
+
+  const hint = document.createElement('div');
+  hint.style.cssText = 'font-size:0.85rem;color:var(--muted);margin-top:10px';
+  hint.textContent = 'Type your number and press Submit!';
+  box.appendChild(hint);
+
+  const btn = document.createElement('button');
+  btn.className = 'btn-primary';
+  btn.style.marginTop = '16px';
+  btn.textContent = '⚡ Submit Answer!';
+  btn.onclick = () => submitChallengeAnswer(data.challenge_question);
+  box.appendChild(btn);
+
+  area.appendChild(box);
+}
+
+async function submitChallengeAnswer(question) {
+  const answerEl = document.getElementById('challenge-answer');
+  const answer = answerEl ? answerEl.value.trim() : '';
+  if (!answer) {
+    showToast('Enter your answer! Even a guess is brave! 💪');
+    return;
+  }
+
+  showLoading(true);
+  try {
+    const res = await fetch('/api/beat/next', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        beat_number: 6,
+        student_answer: answer,
+        challenge_question: question || state.challengeQuestion,
+      }),
+    });
+    const data = await res.json();
+    showLoading(false);
+
+    if (data.error) { showToast(data.error); return; }
+
+    if (data.correct) {
+      showToast('🎉 ' + data.message);
+      await loadBeat(7);
+    } else if (data.gave_up) {
+      // Show solution and move on
+      if (data.solution_text) {
+        renderStoryText(data.solution_text);
+        if (data.image_base64) {
+          document.getElementById('illustration-img').src = `data:image/png;base64,${data.image_base64}`;
+        }
+      }
+      const area = document.getElementById('interaction-area');
+      area.innerHTML = '';
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary';
+      btn.textContent = 'Continue to the Ending! →';
+      btn.onclick = () => loadBeat(7);
+      area.appendChild(btn);
+    } else {
+      // Show hint
+      if (data.hint_text) {
+        renderStoryText(data.hint_text);
+        if (data.image_base64) {
+          document.getElementById('illustration-img').src = `data:image/png;base64,${data.image_base64}`;
+        }
+      }
+      const area = document.getElementById('interaction-area');
+      const box = document.createElement('div');
+      box.className = 'challenge-box';
+      box.innerHTML = `
+        <h3>🎯 Try Again!</h3>
+        <div class="question">${question || state.challengeQuestion}</div>
+      `;
+      const input2 = document.createElement('input');
+      input2.type = 'number';
+      input2.id = 'challenge-answer';
+      input2.placeholder = '?';
+      box.appendChild(input2);
+
+      const btn2 = document.createElement('button');
+      btn2.className = 'btn-primary';
+      btn2.style.marginTop = '16px';
+      btn2.textContent = '⚡ Try Again!';
+      btn2.onclick = () => submitChallengeAnswer(question);
+      box.appendChild(btn2);
+      area.innerHTML = '';
+      area.appendChild(box);
+    }
+  } catch (e) {
+    showLoading(false);
+    showToast('Something went wrong. Try again! ✨');
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// FINAL EXPLANATION + BADGE
+// ────────────────────────────────────────────────────────────
+async function submitFinalExplanation(explanation) {
+  showLoading(true);
+  try {
+    const res = await fetch('/api/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ explanation }),
+    });
+    const data = await res.json();
+    showLoading(false);
+
+    if (data.error === 'empty_response') {
+      showToast(data.message);
+      return;
+    }
+    if (data.error) {
+      showToast(data.error);
+      return;
+    }
+
+    // Save progress to localStorage
+    const progress = JSON.parse(localStorage.getItem('ouam_progress') || '{}');
+    progress.completed = progress.completed || [];
+    if (!progress.completed.includes(state.conceptId)) {
+      progress.completed.push(state.conceptId);
+    }
+    progress.badges = progress.badges || [];
+    if (data.badge) progress.badges.push(data.badge);
+    localStorage.setItem('ouam_progress', JSON.stringify(progress));
+
+    showBadge(data);
+  } catch (e) {
+    showLoading(false);
+    showToast('Something went wrong. Try again! ✨');
+  }
+}
+
+function showBadge(data) {
+  const tier = data.badge?.tier || 'bronze';
+  const badgeEmoji = { gold: '🏆', silver: '⭐', bronze: '🌱' }[tier] || '🏆';
+  const tierClass = `badge-tier-${tier}`;
+
+  document.getElementById('badge-icon').textContent = badgeEmoji;
+  document.getElementById('badge-icon').className = `badge-animation ${tierClass}`;
+  document.getElementById('badge-title').textContent = data.badge?.title || 'Quest Complete!';
+  document.getElementById('badge-feedback').textContent = data.feedback || '';
+
+  const missedEl = document.getElementById('badge-missed');
+  if (data.missed && data.level !== 'STRONG') {
+    missedEl.textContent = `💡 ${data.missed}`;
+    missedEl.classList.remove('hidden');
+  } else {
+    missedEl.classList.add('hidden');
+  }
+
+  showScreen('badge-screen');
+}
+
+// ────────────────────────────────────────────────────────────
+// PROGRESS
+// ────────────────────────────────────────────────────────────
+async function loadProgress() {
+  const list = document.getElementById('progress-list');
+  list.innerHTML = '<p style="color:var(--muted)">Loading your journey...</p>';
+
+  const localProgress = JSON.parse(localStorage.getItem('ouam_progress') || '{}');
+  const completed = localProgress.completed || [];
+  const badges = localProgress.badges || [];
+
+  if (completed.length === 0) {
+    list.innerHTML = '<p style="color:var(--muted);text-align:center">No quests completed yet — start your first adventure! 🚀</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/curriculum');
+    const concepts = await res.json();
+    list.innerHTML = '';
+    concepts.filter(c => completed.includes(c.id)).forEach(c => {
+      const badge = badges.find(b => b.title && b.title.includes(c.title));
+      const item = document.createElement('div');
+      item.className = 'progress-item';
+      item.innerHTML = `
+        <div class="pi-icon">${badge?.tier === 'gold' ? '🏆' : badge?.tier === 'silver' ? '⭐' : '🌱'}</div>
+        <div>
+          <div class="pi-title">${c.title}</div>
+          <div class="pi-strand">${c.strand}</div>
+        </div>
+        ${badge ? `<div class="pi-badge">${badge.title}</div>` : ''}
+      `;
+      list.appendChild(item);
+    });
+  } catch (e) {
+    list.innerHTML = '<p style="color:var(--pink)">Failed to load progress.</p>';
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// AUDIO
+// ────────────────────────────────────────────────────────────
+function setupAudio(base64Audio) {
+  const audio = document.getElementById('story-audio');
+  const playBtn = document.getElementById('btn-play');
+  const pauseBtn = document.getElementById('btn-pause');
+  const replayBtn = document.getElementById('btn-replay');
+  const statusEl = document.getElementById('audio-status');
+
+  if (!base64Audio) {
+    statusEl.textContent = '🔊 Audio unavailable';
+    playBtn.classList.add('hidden');
+    pauseBtn.classList.add('hidden');
+    replayBtn.classList.add('hidden');
+    return;
+  }
+
+  statusEl.textContent = '';
+  playBtn.classList.remove('hidden');
+  pauseBtn.classList.add('hidden');
+  replayBtn.classList.add('hidden');
+
+  // Set audio source
+  audio.src = `data:audio/mp3;base64,${base64Audio}`;
+  audio.onended = () => {
+    pauseBtn.classList.add('hidden');
+    replayBtn.classList.remove('hidden');
+  };
+
+  // Auto-play
+  audio.play().catch(() => {
+    statusEl.textContent = 'Click ▶ to listen';
+  });
+  playBtn.classList.add('hidden');
+  pauseBtn.classList.remove('hidden');
+}
+
+function playAudio() {
+  const audio = document.getElementById('story-audio');
+  audio.play();
+  document.getElementById('btn-play').classList.add('hidden');
+  document.getElementById('btn-pause').classList.remove('hidden');
+  document.getElementById('btn-replay').classList.add('hidden');
+}
+
+function pauseAudio() {
+  document.getElementById('story-audio').pause();
+  document.getElementById('btn-play').classList.remove('hidden');
+  document.getElementById('btn-pause').classList.add('hidden');
+}
+
+function replayAudio() {
+  const audio = document.getElementById('story-audio');
+  audio.currentTime = 0;
+  audio.play();
+  document.getElementById('btn-replay').classList.add('hidden');
+  document.getElementById('btn-pause').classList.remove('hidden');
+}
+
+// ────────────────────────────────────────────────────────────
+// BEAT DOTS
+// ────────────────────────────────────────────────────────────
+function updateBeatDots(beatNum) {
+  const n = typeof beatNum === 'number' ? beatNum : parseInt(beatNum) || 5;
+  for (let i = 1; i <= 7; i++) {
+    const dot = document.getElementById(`dot-${i}`);
+    if (!dot) continue;
+    dot.className = 'beat-dot';
+    if (i < n) dot.classList.add('done');
+    else if (i === n) dot.classList.add('active');
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// LOADING
+// ────────────────────────────────────────────────────────────
+function showLoading(show) {
+  const el = document.getElementById('loading');
+  const storyCard = document.getElementById('story-text');
+  const illCard = document.getElementById('illustration-card');
+  const audio = document.getElementById('audio-bar');
+  const interact = document.getElementById('interaction-area');
+
+  if (show) {
+    el.classList.remove('hidden');
+    storyCard.style.opacity = '0.3';
+    if (illCard) illCard.style.opacity = '0.3';
+    if (audio) audio.style.opacity = '0.3';
+    if (interact) interact.style.opacity = '0.3';
+    let i = 0;
+    loadingMsgInterval = setInterval(() => {
+      document.getElementById('loading-msg').textContent = LOADING_MSGS[i % LOADING_MSGS.length];
+      i++;
+    }, 2500);
+  } else {
+    el.classList.add('hidden');
+    storyCard.style.opacity = '1';
+    if (illCard) illCard.style.opacity = '1';
+    if (audio) audio.style.opacity = '1';
+    if (interact) interact.style.opacity = '1';
+    clearInterval(loadingMsgInterval);
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// TOAST
+// ────────────────────────────────────────────────────────────
+let toastTimeout = null;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// ────────────────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  showScreen('welcome');
+});
+  <title>🧮 Math Stories — MathBot</title>
+  <style>
+    /* ------------------------------------------------------------------ */
+    /* Reset & variables                                                    */
+    /* ------------------------------------------------------------------ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:  #7c3aed;
+      --teal:    #0d9488;
+      --pink:    #db2777;
+      --yellow:  #f59e0b;
+      --bg:      #f5f3ff;
+      --card-bg: #ffffff;
+      --text:    #1e1b4b;
+      --muted:   #6b7280;
+      --radius:  1rem;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Header                                                               */
+    /* ------------------------------------------------------------------ */
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1.5rem;
+    }
+    header h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    header p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      margin-top: .5rem;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Form card                                                            */
+    /* ------------------------------------------------------------------ */
+    .form-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(124,58,237,.12);
+      max-width: 640px;
+      margin: 0 auto 2rem;
+      padding: 2rem;
+    }
+    .form-card h2 {
+      font-size: 1.4rem;
+      color: var(--purple);
+      margin-bottom: 1.25rem;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 1rem;
+    }
+    @media (min-width: 520px) {
+      .field-group { grid-template-columns: 1fr 1fr; }
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    label span { font-size: .85rem; color: var(--muted); font-weight: 400; }
+
+    input, select {
+      width: 100%;
+      padding: .65rem .9rem;
+      border: 2px solid #e5e7eb;
+      border-radius: .6rem;
+      font-size: 1rem;
+      transition: border-color .2s;
+      background: #fafafa;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--purple);
+      background: #fff;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Generate button                                                      */
+    /* ------------------------------------------------------------------ */
+    #generate-btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    #generate-btn:hover { opacity: .9; transform: translateY(-1px); }
+    #generate-btn:active { transform: translateY(0); }
+    #generate-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* ------------------------------------------------------------------ */
+    /* Spinner / loading                                                    */
+    /* ------------------------------------------------------------------ */
+    #loader {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 1rem;
+    }
+    #loader.visible { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 56px; height: 56px;
+      border: 6px solid #e5e7eb;
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+      margin-bottom: 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loader p {
+      font-size: 1.1rem;
+      color: var(--purple);
+      font-weight: 600;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Story output                                                         */
+    /* ------------------------------------------------------------------ */
+    #story-output { max-width: 800px; margin: 0 auto; }
+
+    .beat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 3px 16px rgba(0,0,0,.08);
+      margin-bottom: 1.75rem;
+      overflow: hidden;
+      animation: fadeUp .45s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .beat-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1rem 1.25rem .75rem;
+    }
+    .beat-badge {
+      padding: .3rem .8rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #fff;
+    }
+    .badge-setup        { background: var(--purple); }
+    .badge-discovery    { background: var(--teal); }
+    .badge-representation { background: #0284c7; }
+    .badge-reasoning    { background: var(--yellow); color: #1e1b4b; }
+    .badge-generalize   { background: var(--pink); }
+    .badge-reflection   { background: #16a34a; }
+
+    .beat-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0 1.25rem 1.25rem;
+    }
+    @media (min-width: 620px) {
+      .beat-body { flex-direction: row; align-items: flex-start; }
+      .beat-illustration { flex: 0 0 200px; }
+      .beat-text-area { flex: 1; }
+    }
+
+    .beat-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    /* Illustration */
+    .beat-illustration {
+      border-radius: .75rem;
+      overflow: hidden;
+      background: #f3f0ff;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .beat-illustration img,
+    .beat-illustration svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .img-loading {
+      font-size: 2rem;
+      animation: pulse 1.2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+
+    /* Audio button */
+    .narrate-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .75rem;
+      padding: .5rem 1rem;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--teal);
+      background: #f0fdf4;
+      border: 2px solid var(--teal);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .narrate-btn:hover { background: var(--teal); color: #fff; }
+    .narrate-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* ------------------------------------------------------------------ */
+    /* Error banner                                                         */
+    /* ------------------------------------------------------------------ */
+    #error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      color: #991b1b;
+      max-width: 640px;
+      margin: 0 auto 1.5rem;
+    }
+    #error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>🧮 Math Stories</h1>
+  <p>Let MathBot turn any math topic into an epic adventure! 🚀</p>
+</header>
+
+<!-- Form card -->
+<section class="form-card">
+  <h2>✨ Build Your Story</h2>
+  <form id="story-form">
+    <div class="field-group">
+
+      <label>
+        📚 Math Topic
+        <span>What are we learning today?</span>
+        <select name="topic" id="topic">
+          <option value="multiplication">Multiplication</option>
+          <option value="division">Division</option>
+          <option value="fractions">Fractions</option>
+          <option value="place value">Place Value</option>
+          <option value="patterns">Patterns</option>
+        </select>
+      </label>
+
+      <label>
+        🗺️ Place
+        <span>Where does the story happen?</span>
+        <input type="text" name="place" id="place"
+               placeholder="e.g. a candy volcano" maxlength="60" />
+      </label>
+
+      <label>
+        🤝 Sidekick
+        <span>Who helps you on the quest?</span>
+        <input type="text" name="sidekick" id="sidekick"
+               placeholder="e.g. a talking pizza" maxlength="60" />
+      </label>
+
+      <label>
+        ⭐ Favourite Item
+        <span>What is your favorite item?</span>
+        <input type="text" name="item" id="item"
+               placeholder="e.g. glowing gems" maxlength="60" />
+      </label>
+
+      <label style="grid-column: span 2;">
+        😄 Story Mood
+        <span>How should the story feel?</span>
+        <select name="mood" id="mood">
+          <option value="silly">😂 Silly</option>
+          <option value="brave">🦁 Brave</option>
+          <option value="curious">🔍 Curious</option>
+          <option value="sleepy">😴 Sleepy</option>
+          <option value="excited">🎉 Excited</option>
+        </select>
+      </label>
+
+    </div><!-- /.field-group -->
+
+    <button type="submit" id="generate-btn">🌟 Generate My Math Story!</button>
+  </form>
+</section>
+
+<!-- Error banner -->
+<div id="error-banner" role="alert"></div>
+
+<!-- Loader -->
+<div id="loader" aria-live="polite">
+  <div class="spinner"></div>
+  <p id="loader-msg">MathBot is cooking up your story… 🍳</p>
+</div>
+
+<!-- Story output -->
+<section id="story-output" aria-live="polite"></section>
+
+<script>
+  /* ------------------------------------------------------------------ */
+  /* Fun loading messages                                                 */
+  /* ------------------------------------------------------------------ */
+  const LOADING_MSGS = [
+    'MathBot is cooking up your story… 🍳',
+    'Sharpening the story pencils… ✏️',
+    'Waking up the math wizards… 🧙',
+    'Counting imaginary clouds… ☁️',
+    'Mixing numbers with adventure… 🧪',
+    'Consulting the Grand Library of Equations… 📚',
+    'Teaching robots to rhyme… 🤖',
+    'Almost there — adding extra sprinkles… 🍩',
+  ];
+
+  let loaderTimer;
+  function startLoader() {
+    let i = 0;
+    const msgEl = document.getElementById('loader-msg');
+    msgEl.textContent = LOADING_MSGS[0];
+    loaderTimer = setInterval(() => {
+      i = (i + 1) % LOADING_MSGS.length;
+      msgEl.textContent = LOADING_MSGS[i];
+    }, 2500);
+  }
+  function stopLoader() { clearInterval(loaderTimer); }
+
+  /* ------------------------------------------------------------------ */
+  /* Beat label map                                                       */
+  /* ------------------------------------------------------------------ */
+  const BEAT_LABELS = {
+    setup:           '🏁 Setup',
+    discovery:       '🔎 Discovery',
+    representation:  '🔢 Representation',
+    reasoning:       '🧠 Reasoning',
+    generalize:      '🌍 Generalize',
+    reflection:      '🎉 Reflection',
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Image loading                                                        */
+  /* ------------------------------------------------------------------ */
+  async function loadImage(prompt, container) {
+    try {
+      const res = await fetch('/api/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) throw new Error('image error');
+      const data = await res.json();
+      const src = `data:${data.mimeType};base64,${data.image}`;
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = prompt.slice(0, 80);
+      container.innerHTML = '';
+      container.appendChild(img);
+    } catch {
+      container.innerHTML = '<span style="font-size:2rem;padding:1rem">🎨</span>';
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Audio narration                                                      */
+  /* ------------------------------------------------------------------ */
+  function attachNarrateBtn(btn, text) {
+    let audioEl = null;
+    btn.addEventListener('click', async () => {
+      if (audioEl && !audioEl.paused) {
+        audioEl.pause();
+        btn.textContent = '🔊 Listen';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '⏳ Loading…';
+      try {
+        const res = await fetch('/api/narrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error('tts error');
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        const src = `data:${data.mimeType};base64,${data.audio}`;
+        audioEl = new Audio(src);
+        audioEl.play();
+        btn.textContent = '⏸️ Pause';
+        audioEl.onended = () => { btn.textContent = '🔊 Listen'; };
+      } catch {
+        btn.textContent = '🔇 Audio N/A';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Render a single beat card                                            */
+  /* ------------------------------------------------------------------ */
+  function renderBeat(beat, index) {
+    const card = document.createElement('div');
+    card.className = 'beat-card';
+    card.style.animationDelay = `${index * 0.12}s`;
+
+    const label = BEAT_LABELS[beat.type] || beat.type;
+    const badgeClass = `badge-${beat.type}`;
+
+    card.innerHTML = `
+      <div class="beat-header">
+        <span class="beat-badge ${badgeClass}">${label}</span>
+      </div>
+      <div class="beat-body">
+        <div class="beat-illustration">
+          <span class="img-loading">🎨</span>
+        </div>
+        <div class="beat-text-area">
+          <p class="beat-text">${escapeHtml(beat.text)}</p>
+          <button class="narrate-btn" type="button">🔊 Listen</button>
+        </div>
+      </div>`;
+
+    const imgContainer = card.querySelector('.beat-illustration');
+    const narrateBtn = card.querySelector('.narrate-btn');
+
+    // Load image asynchronously
+    loadImage(beat.imagePrompt, imgContainer);
+
+    // Attach narration
+    attachNarrateBtn(narrateBtn, beat.text);
+
+    return card;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Escape HTML                                                          */
+  /* ------------------------------------------------------------------ */
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Form submit                                                          */
+  /* ------------------------------------------------------------------ */
+  document.getElementById('story-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn     = document.getElementById('generate-btn');
+    const loader  = document.getElementById('loader');
+    const output  = document.getElementById('story-output');
+    const errBanner = document.getElementById('error-banner');
+
+    // Reset UI
+    output.innerHTML = '';
+    errBanner.classList.remove('visible');
+    btn.disabled = true;
+    loader.classList.add('visible');
+    startLoader();
+
+    const payload = {
+      topic:   document.getElementById('topic').value,
+      place:   document.getElementById('place').value  || 'a magical forest',
+      sidekick:document.getElementById('sidekick').value || 'a friendly robot',
+      item:    document.getElementById('item').value   || 'glowing gems',
+      mood:    document.getElementById('mood').value,
+    };
+
+    try {
+      const res = await fetch('/api/story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+      if (!data.beats || !data.beats.length) throw new Error('No story beats returned.');
+
+      data.beats.forEach((beat, i) => {
+        output.appendChild(renderBeat(beat, i));
+      });
+
+      output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      errBanner.textContent = `😢 Oops! ${err.message || 'Something went wrong. Please try again.'}`;
+      errBanner.classList.add('visible');
+    } finally {
+      stopLoader();
+      loader.classList.remove('visible');
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

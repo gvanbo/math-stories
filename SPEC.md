@@ -1,0 +1,621 @@
+# Once Upon a Number — Full Application Specification
+
+> **Hackathon:** Gemini Live Agent Challenge — Creative Storyteller Category  
+> **Deadline:** March 16, 2026, 5:00 PM PT  
+> **Target Learner:** Grade 4 students (ages 9–10)  
+> **Core Premise:** Math concepts are taught through fully immersive, adaptive, AI-generated stories where the student is a co-author of their own learning experience.
+
+---
+
+## Vision
+
+Most math apps reward clicking. This app builds **genuine mathematical intuition** through narrative immersion.
+
+A student who forgets that 6×8=48 will never forget that their robot sidekick counted 48 bolts at the underwater bakery. The story IS the memory. The math IS the story.
+
+The student doesn't talk *to* a bot. They step *into* a story that responds to them, adapts to their answers, and plants mnemonic anchors that make math facts permanently retrievable.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.12 + Flask |
+| AI — Story Generation | `gemini-2.0-flash` via `google-genai` SDK |
+| AI — Image Generation | `imagen-3.0-generate-001` via `google-genai` SDK |
+| AI — Response Evaluation | `gemini-2.0-flash` (same client, separate call) |
+| AI — Text to Speech | Google Cloud TTS or `gemini-2.5-flash-preview-tts` |
+| Frontend | Single HTML file, vanilla JS, no framework |
+| Hosting | Google Cloud Run |
+| Session State | Server-side Flask session (cookie) |
+| Environment | `.env` file with `GEMINI_API_KEY` |
+
+---
+
+## File Structure
+
+```
+prototype/
+├── app.py                  # Flask app — all routes
+├── story_engine.py         # Story generation, beat prompts, Gemini calls
+├── curriculum.py           # Alberta Grade 4 math concepts + progression
+├── evaluator.py            # Gemini-powered student response evaluation
+├── tts.py                  # Text-to-speech wrapper
+├── imagen.py               # Imagen 3 image generation wrapper
+├── templates/
+│   └── index.html          # Full single-page app UI
+├── static/
+│   └── placeholder.svg     # Fallback if Imagen fails
+├── requirements.txt
+├── Dockerfile
+├── .env.example
+└── README.md
+```
+
+---
+
+## Curriculum: Alberta Grade 4 Math Concepts
+
+Defined in `curriculum.py` as a Python dict. Each concept has:
+- `id` — unique string key
+- `title` — display name
+- `strand` — Number / Patterns / Measurement
+- `prerequisite_ids` — list of concept IDs that must be completed first
+- `sessions` — list of session specs (see below)
+- `mnemonic_anchors` — dict of `fact: vivid_image_description` for key facts
+
+### Concepts to Include (in learning order)
+
+```python
+CONCEPTS = {
+  "multiplication_equal_groups": {
+    "title": "Multiplication: Equal Groups",
+    "strand": "Number",
+    "prerequisite_ids": [],
+    "big_idea": "Multiplication counts equal groups faster than adding one by one.",
+    "key_facts": ["2x", "3x", "4x", "5x"],
+    "mnemonic_anchors": {
+      "3x4=12": "3 alien spaceships each carrying 4 moon rocks",
+      "4x5=20": "4 pizza boxes each with 5 slices at the robot party",
+      "3x6=18": "3 dragons each breathing 6 fireballs at the ice castle"
+    }
+  },
+  "multiplication_arrays": {
+    "title": "Multiplication: Arrays",
+    "strand": "Number",
+    "prerequisite_ids": ["multiplication_equal_groups"],
+    "big_idea": "Arrays show multiplication as rows and columns — and flipping them proves 3x4 = 4x3."
+  },
+  "multiplication_commutative": {
+    "title": "Multiplication: Commutative Property",
+    "strand": "Number",
+    "prerequisite_ids": ["multiplication_arrays"]
+  },
+  "multiplication_facts_to_9x9": {
+    "title": "Multiplication Facts to 9×9",
+    "strand": "Number",
+    "prerequisite_ids": ["multiplication_commutative"]
+  },
+  "division_sharing": {
+    "title": "Division: Sharing Equally",
+    "strand": "Number",
+    "prerequisite_ids": ["multiplication_equal_groups"]
+  },
+  "division_grouping": {
+    "title": "Division: Grouping",
+    "strand": "Number",
+    "prerequisite_ids": ["division_sharing"]
+  },
+  "division_fact_families": {
+    "title": "Division: Fact Families",
+    "strand": "Number",
+    "prerequisite_ids": ["division_grouping"]
+  },
+  "fractions_equal_parts": {
+    "title": "Fractions: Equal Parts of a Whole",
+    "strand": "Number",
+    "prerequisite_ids": []
+  },
+  "fractions_naming": {
+    "title": "Fractions: Naming and Writing",
+    "strand": "Number",
+    "prerequisite_ids": ["fractions_equal_parts"]
+  },
+  "fractions_number_line": {
+    "title": "Fractions on a Number Line",
+    "strand": "Number",
+    "prerequisite_ids": ["fractions_naming"]
+  },
+  "place_value_thousands": {
+    "title": "Place Value to 10,000",
+    "strand": "Number",
+    "prerequisite_ids": []
+  },
+  "patterns_increasing": {
+    "title": "Increasing Patterns",
+    "strand": "Patterns",
+    "prerequisite_ids": []
+  }
+}
+```
+
+---
+
+## The 10-Minute Lesson — Beat-by-Beat Spec
+
+Each lesson is one **session** on one **concept**. The lesson has 8 beats. Each beat is generated by Gemini, displayed as rich text, illustrated by Imagen, and narrated by TTS.
+
+### Beat 0: PERSONALIZATION (before story starts)
+**UI:** Mad-libs style form
+- Favourite place (text input, e.g. "a volcano", "an underwater bakery", "the moon")
+- Sidekick name + type (text inputs, e.g. "Bolt" the robot)
+- Favourite item (text input, e.g. "tacos", "soccer balls", "diamonds")
+- Mood today (dropdown: silly / brave / curious / sleepy / excited)
+
+This data is stored in session and injected into every prompt.
+
+---
+
+### Beat 1: ARRIVAL — Scene Setting (60 sec)
+**Gemini prompt:**
+```
+You are writing an immersive, richly detailed math story for a Grade 4 student.
+Student's world: place={place}, sidekick={sidekick}, item={item}, mood={mood}.
+Math concept being taught: {concept_title}. Big idea: {big_idea}.
+
+Write the story opening. This should be 4-5 vivid paragraphs that:
+- Paint a rich, sensory picture of {place} — smells, sounds, colors, textures
+- Introduce {sidekick} with a distinct personality and a funny quirk
+- Establish the student as the hero who has arrived here for a reason
+- End with a mysterious hint that something involving {item}s needs solving
+- Tone: joyful, funny, slightly chaotic, Grade 4 reading level
+- Do NOT introduce the math concept yet. Just set the scene.
+
+Also output on a new line: IMAGE_PROMPT: [one sentence vivid cartoon illustration description of this scene]
+```
+**Expected output length:** 300-400 words of story + 1 image prompt
+**Imagen:** Generate illustration from image prompt
+**TTS:** Narrate full text
+**UI interaction:** Student reads/listens, then clicks "What happens next?"
+
+---
+
+### Beat 2: THE PROBLEM EMERGES (90 sec)
+**Gemini prompt:**
+```
+Continue the story. The student and {sidekick} discover a problem that urgently needs solving.
+The problem MUST require {concept_title} to solve efficiently.
+Do NOT explain the math yet. Just present the problem naturally through the story.
+
+Write 3-4 paragraphs that:
+- Show the scale of the problem (lots of {item}s to deal with)
+- Show {sidekick} panicking or being confused
+- Make the student feel like THEY are the only one who can figure this out
+- End with a direct question to the student: ask them to predict or decide something
+  (e.g. "How would YOU figure out how many tacos there are?")
+
+Also output: IMAGE_PROMPT: [illustration of the problem moment]
+```
+**UI interaction:** Free text input — student types their prediction/answer
+**Store:** student_response_1 in session
+
+---
+
+### Beat 3: THE WRONG WAY (90 sec)
+**Gemini prompt:**
+```
+The student responded: "{student_response_1}"
+
+Continue the story. {sidekick} tries the slow/inefficient approach first 
+(counting one by one, repeated addition, guessing). It fails or takes forever.
+Make this funny — {sidekick} makes a spectacular, humorous mess of it.
+
+Write 3-4 paragraphs showing:
+- The inefficient approach in action
+- Why it breaks down (too slow, error-prone, exhausting)
+- {sidekick} dramatically giving up
+- A moment where the student realizes there MUST be a better way
+
+Reference the student's prediction naturally in the narrative.
+Also output: IMAGE_PROMPT: [illustration of the funny failure moment]
+```
+**TTS + Imagen as before**
+**UI interaction:** Button — "Show me the better way!"
+
+---
+
+### Beat 4: DISCOVERY — The Math Revealed (2 min)
+**Gemini prompt:**
+```
+Now reveal {concept_title} as the elegant solution.
+
+Write 4-5 paragraphs that show the concept THREE ways inside the story:
+1. CONCRETE: {sidekick} physically arranges {item}s into equal groups/arrays in {place}
+   Use real numbers appropriate for Grade 4 (not just 2x3 — use 4x6, 7x8, etc.)
+2. PICTORIAL: Describe exactly how it looks visually — rows, columns, groups
+   Write it so vividly the student can picture it without seeing a diagram
+3. ABSTRACT: The equation appears naturally in dialogue
+   e.g. {sidekick} says "Wait... 4 groups of 6 is the SAME as saying 4 times 6 equals 24!"
+
+Make the moment of discovery feel like a genuine eureka moment.
+Plant the mnemonic anchor: {mnemonic_anchor} — weave this specific image into the story.
+
+Also output: IMAGE_PROMPT: [illustration showing the concrete model clearly — groups/array/number line]
+```
+**UI interaction:** Student clicks "I think I get it!" OR "Wait, I'm confused" 
+- If confused: Gemini generates a simpler re-explanation using a different analogy
+- If got it: continue to Beat 5
+
+---
+
+### Beat 5: GOING DEEPER — Student Drives (90 sec)
+**Gemini prompt:**
+```
+The student understands the basic concept. Now deepen it.
+
+Present 2 more examples in the story using DIFFERENT numbers.
+For each example:
+- Set up the situation in 1 sentence
+- PAUSE and ask the student to predict the answer before {sidekick} reveals it
+- After the student answers, continue the story with the result
+
+Also show the PATTERN — what do all three examples have in common?
+End with {sidekick} asking: "Can you see why this always works?"
+
+Also output: IMAGE_PROMPT: [illustration showing the pattern across multiple examples]
+```
+**UI interaction:** Two separate text inputs for the two prediction moments
+**Gemini evaluates each answer inline and continues story accordingly**
+
+---
+
+### Beat 6: THE CHALLENGE — Student Solves It (90 sec)
+**Gemini prompt:**
+```
+Present the climactic challenge. The main problem from Beat 2 is now solvable.
+But give it a twist — slightly different numbers than the examples used.
+
+Write 2 paragraphs setting up the final challenge.
+End with a clear, specific math question the student must answer to save the day.
+The question should require {concept_title} and use numbers in the Grade 4 range.
+
+Also output: 
+CHALLENGE_QUESTION: [the exact math question]
+CHALLENGE_ANSWER: [the correct answer — integer]
+IMAGE_PROMPT: [illustration of the climactic moment]
+```
+**UI interaction:** Number input + Submit button
+**Evaluation:**
+- Correct → Beat 7 celebration path
+- Wrong (attempt 1) → Gemini generates a funny story hint, student tries again
+- Wrong (attempt 2) → Gemini shows the solution step by step through the story, then continues
+
+---
+
+### Beat 7: REFLECTION + BADGE (60 sec)
+**Gemini prompt (after correct answer):**
+```
+The student solved the challenge! Write the triumphant story ending (2-3 paragraphs).
+{sidekick} celebrates dramatically and asks the student to explain 
+what they learned in their own words.
+
+End with {sidekick} saying: "Before we go — can you explain {concept_title} 
+to ME like I'm a confused robot? Use your own words!"
+
+Also output: IMAGE_PROMPT: [celebration illustration with {sidekick} and {item}s]
+```
+**UI interaction:** Free text — student explains the concept
+
+**Evaluator call (separate Gemini call):**
+```
+A Grade 4 student was just taught {concept_title}.
+Big idea: {big_idea}
+They wrote this explanation: "{student_final_explanation}"
+
+Evaluate their understanding on a scale:
+- STRONG: They explained the core idea correctly in their own words
+- PARTIAL: They got part of it but missed something important  
+- NEEDS_SUPPORT: Their explanation shows a misconception
+
+Respond with:
+LEVEL: [STRONG/PARTIAL/NEEDS_SUPPORT]
+FEEDBACK: [2-3 sentences of warm, encouraging feedback IN CHARACTER as {sidekick}]
+MISSED: [If PARTIAL or NEEDS_SUPPORT, one sentence on what was missing]
+```
+
+**Badge awarded based on level:**
+- STRONG → Gold badge: "{concept_title} Master! 🏆"
+- PARTIAL → Silver badge: "{concept_title} Explorer! ⭐"
+- NEEDS_SUPPORT → Bronze badge: "{concept_title} Adventurer! 🌱" + "Let's try another story!"
+
+---
+
+## Session State (Flask session dict)
+
+```python
+session = {
+  # Personalization
+  "place": str,
+  "sidekick": str, 
+  "item": str,
+  "mood": str,
+  
+  # Current lesson
+  "concept_id": str,
+  "current_beat": int,  # 0-7
+  "conversation_history": list,  # Full Gemini conversation for context
+  
+  # Student responses
+  "student_responses": list,  # All student answers this session
+  
+  # Progress (persisted across sessions via localStorage on client)
+  "completed_concepts": list,
+  "badges": list,
+}
+```
+
+---
+
+## Flask Routes
+
+```
+GET  /                          Serve index.html
+POST /api/session/start         Initialize session with personalization + concept
+POST /api/beat/next             Generate next beat (takes current beat + student response)
+POST /api/image                 Generate Imagen illustration for a prompt
+POST /api/narrate               TTS for a text block  
+POST /api/evaluate              Evaluate student's final explanation
+GET  /api/curriculum            Return full concept list with prerequisites
+GET  /api/progress              Return student's completed concepts + badges
+```
+
+### `/api/beat/next` — Core Endpoint
+
+**Request:**
+```json
+{
+  "beat_number": 3,
+  "student_response": "I think we should count them in groups",
+  "session_id": "abc123"
+}
+```
+
+**Response:**
+```json
+{
+  "beat_number": 3,
+  "story_text": "...(full story text for this beat)...",
+  "image_prompt": "colorful cartoon of a robot dramatically failing to count tacos...",
+  "image_base64": "...(base64 PNG from Imagen)...",
+  "audio_base64": "...(base64 MP3 from TTS)...",
+  "interaction_type": "button" | "text_input" | "number_input",
+  "interaction_prompt": "What would YOU do next?",
+  "challenge_question": null,  
+  "challenge_answer": null,
+  "is_final_beat": false
+}
+```
+
+---
+
+## Frontend (index.html) — UI Spec
+
+### Visual Design
+- **Color palette:** Deep purple bg (#1a0a2e), bright teal accent (#00d4aa), hot pink highlights (#ff6b9d), warm yellow for badges (#ffd700)
+- **Typography:** Google Fonts — Fredoka (headings, playful), Outfit (body)
+- **Layout:** Single centered column, max 800px, mobile-responsive
+- **Illustrations:** Full-width rounded cards, 16:9 ratio, displayed above story text
+- **Audio:** Auto-play narration when each beat loads, with pause/replay button
+
+### Flow States
+1. **WELCOME** — App name, tagline, "Start Your Adventure" button
+2. **PERSONALIZE** — Mad-libs form with emoji labels, animated submit button
+3. **CONCEPT SELECT** — Visual grid of concept cards showing progress (locked/unlocked/completed)
+4. **STORY** — Main lesson view (see below)
+5. **BADGE** — Full-screen celebration with badge animation
+6. **PROGRESS MAP** — Visual curriculum tree showing journey so far
+
+### Story View Layout
+```
+┌─────────────────────────────────┐
+│  🎯 Beat indicator (1 of 7)     │
+│  📖 Concept: Multiplication     │
+├─────────────────────────────────┤
+│                                 │
+│   [IMAGEN ILLUSTRATION]         │
+│   Full width, rounded corners   │
+│                                 │
+├─────────────────────────────────┤
+│  Story text (large, readable)   │
+│  Animated in paragraph by para  │
+│                                 │
+│  🔊 [▶ Listen] [⏸ Pause]       │
+├─────────────────────────────────┤
+│  [Student interaction area]     │
+│  Text input OR buttons          │
+│  depending on beat type         │
+└─────────────────────────────────┘
+```
+
+### Loading States
+While Gemini/Imagen is generating, show animated loading with fun messages:
+- "MathBot is brewing up your story... ☕"
+- "Imagen is painting your adventure... 🎨"
+- "Your sidekick is getting ready... 🤖"
+- "The math magic is happening... ✨"
+
+---
+
+## Gemini API Usage
+
+```python
+import os
+from google import genai
+from google.genai import types
+
+client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
+
+# Story generation — maintain conversation history for coherence
+def generate_beat(prompt: str, history: list) -> str:
+    history.append({"role": "user", "parts": [{"text": prompt}]})
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=history,
+        config=types.GenerateContentConfig(
+            system_instruction="""You are a master educational storyteller for Grade 4 students.
+            You write immersive, funny, richly detailed math stories that teach through narrative.
+            Every story must be mathematically accurate for Alberta Grade 4 curriculum.
+            Always explain WHY math works, not just how. Use CPA progression: 
+            Concrete → Pictorial → Abstract. Keep reading level at Grade 4.
+            Generate vivid, detailed stories — aim for 300-500 words per beat.""",
+            temperature=0.8,
+            max_output_tokens=1500
+        )
+    )
+    reply = response.text
+    history.append({"role": "model", "parts": [{"text": reply}]})
+    return reply
+
+# Image generation
+def generate_image(prompt: str) -> str | None:
+    try:
+        full_prompt = f"Children's book illustration, colorful, bright, cheerful, Grade 4 appropriate: {prompt}"
+        response = client.models.generate_images(
+            model="imagen-3.0-generate-001",
+            prompt=full_prompt,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                aspect_ratio="16:9",
+                safety_filter_level="block_low_and_above"
+            )
+        )
+        image_bytes = response.generated_images[0].image.image_bytes
+        return base64.b64encode(image_bytes).decode()
+    except Exception as e:
+        print(f"Imagen failed: {e}")
+        return None  # Frontend shows placeholder SVG
+
+# Student response evaluation
+def evaluate_response(concept: dict, explanation: str, sidekick: str) -> dict:
+    prompt = f"""
+    A Grade 4 student just learned about: {concept['title']}
+    Core idea: {concept['big_idea']}
+    Their explanation: "{explanation}"
+    
+    Evaluate their understanding:
+    LEVEL: STRONG | PARTIAL | NEEDS_SUPPORT
+    FEEDBACK: 2-3 sentences of warm feedback IN CHARACTER as {sidekick}
+    MISSED: (only if PARTIAL/NEEDS_SUPPORT) one sentence on what was missing
+    """
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[{"role": "user", "parts": [{"text": prompt}]}],
+        config=types.GenerateContentConfig(temperature=0.3)
+    )
+    # Parse LEVEL/FEEDBACK/MISSED from response.text
+    return parse_evaluation(response.text)
+```
+
+---
+
+## Error Handling Rules
+
+1. **If Imagen fails** → show a placeholder SVG with the image prompt text displayed in a styled box. Story continues uninterrupted.
+2. **If TTS fails** → show story text only, no audio. Add a "🔊 Audio unavailable" notice.
+3. **If Gemini takes >10s** → show animated loading, do NOT timeout. Stories need time.
+4. **If student submits empty answer** → gentle prompt: "Tell me what you think — even a guess is great!"
+5. **Never crash the story.** Every error is caught and handled gracefully.
+
+---
+
+## Cloud Run Deployment
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8080
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "120", "--workers", "1", "app:app"]
+```
+
+```bash
+# Deploy command
+gcloud run deploy once-upon-a-number \
+  --source prototype/ \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars GEMINI_API_KEY=your_key \
+  --memory 512Mi \
+  --timeout 120
+```
+
+---
+
+## requirements.txt
+
+```
+flask==3.0.3
+google-genai==1.0.0
+gunicorn==22.0.0
+python-dotenv==1.0.1
+```
+
+---
+
+## README Quick Start
+
+```bash
+cd prototype
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY from https://aistudio.google.com/apikey
+pip install -r requirements.txt
+python app.py
+# Open http://localhost:5000
+```
+
+---
+
+## Hackathon Submission Checklist
+
+- [ ] App runs locally with `python app.py`
+- [ ] App deployed to Cloud Run (public URL)
+- [ ] 4-minute demo video on YouTube showing full 10-minute lesson flow
+- [ ] README has spin-up instructions
+- [ ] Architecture diagram in README
+- [ ] `gemini-2.0-flash` and `imagen-3.0-generate-001` both used
+- [ ] Student responses actually change the story (adaptive branching)
+- [ ] At least 3 math concepts fully implemented
+- [ ] Evaluation/feedback loop demonstrated in video
+
+---
+
+## Architecture Diagram (for README)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    STUDENT BROWSER                       │
+│  index.html — Single Page App                           │
+│  Mad-libs form → Story cards → Audio → Interaction      │
+└──────────────────────┬──────────────────────────────────┘
+                       │ HTTP (JSON)
+┌──────────────────────▼──────────────────────────────────┐
+│              FLASK APP (Cloud Run)                       │
+│                                                          │
+│  app.py          — Routes + session management          │
+│  story_engine.py — Beat prompts + conversation history  │
+│  curriculum.py   — Alberta Gr4 concept definitions      │
+│  evaluator.py    — Student response evaluation          │
+│  imagen.py       — Illustration generation              │
+│  tts.py          — Narration generation                 │
+└──────┬───────────────────────┬───────────────────────────┘
+       │                       │
+┌──────▼──────┐    ┌───────────▼──────────┐
+│ Gemini 2.0  │    │   Imagen 3.0         │
+│ Flash       │    │   generate-001       │
+│ Story gen   │    │   Illustrations      │
+│ Evaluation  │    │                      │
+└─────────────┘    └──────────────────────┘
+```
